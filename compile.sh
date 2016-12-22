@@ -77,16 +77,19 @@ ISE_MAP_OPTS="-p xc7a100t-csg324-1 -w -logic_opt on -ol high -t 1 -xt 0 -registe
 ISE_PAR_OPTS="-w -ol std -mt off"
 ISE_TRCE_OPTS="-v 3 -s 1 -n 3 -fastpaths -xml"
 
+# move into here so that all the output does not fill the base directory
+cd ${BASEDIR}/isepn147/mega65/working
+pwd
+
 # ensure these directory exists, if not, make them
-# i dont think we need to do this now
-#if test ! -e    "./isework/xst/"; then
-#  echo "Creating ./isework/xst/"
-#  mkdir          ./isework/xst/
-#fi
-#if test ! -e    "./isework/xst/projnav.tmp/"; then
-#  echo "Creating ./isework/xst/projnav.tmp/"
-#  mkdir          ./isework/xst/projnav.tmp
-#fi
+if test ! -e    "${BASEDIR}/isepn147/mega65/working/xst/"; then
+  echo "Creating ${BASEDIR}/isepn147/mega65/working/xst/"
+  mkdir          ${BASEDIR}/isepn147/mega65/working/xst/
+fi
+if test ! -e    "${BASEDIR}/isepn147/mega65/working/xst/projnav.tmp/"; then
+  echo "Creating ${BASEDIR}/isepn147/mega65/working/xst/projnav.tmp/"
+  mkdir          ${BASEDIR}/isepn147/mega65/working/xst/projnav.tmp
+fi
 
 # begin the ISE build:
 echo "Beginning the ISE build."
@@ -100,10 +103,12 @@ echo ${gitstring} > $outfile0
 echo ${branch}  >> $outfile0
 echo ${branch2} >> $outfile0
 
-# move into here so that all the output does not fill the base directory
-cd ${BASEDIR}/isepn147/mega65/working
-pwd
 SCROUTDIR_FULL="${BASEDIR}/isepn147/mega65/working/${SCROUTDIR}"
+
+if test ! -e    "${SCROUTDIR_FULL}"; then
+  echo "Creating ${SCROUTDIR_FULL}"
+  mkdir          ${SCROUTDIR_FULL}
+fi
 
 #
 # ISE: synthesize
