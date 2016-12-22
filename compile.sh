@@ -10,16 +10,14 @@
 #ls -al    isework/container.xst
 
 BASEDIR=$(pwd)
+SCROUTDIR="megascript"
+
 
 # ensure these directory exists, if not, make them
 LOGDIR="build-logs"
 if test ! -e    "${BASEDIR}/${LOGDIR}"; then
   echo "Creating ${BASEDIR}/${LOGDIR}"
   mkdir          ${BASEDIR}/${LOGDIR}
-fi
-if test ! -e    "${BASEDIR}/build"; then
-  echo "Creating ${BASEDIR}/build"
-  mkdir          ${BASEDIR}/build
 fi
 if test ! -e    "${BASEDIR}/sdcard-files"; then
   echo "Creating ${BASEDIR}/sdcard-files"
@@ -65,7 +63,6 @@ branch=`git status -b -s | head -n 1`
 # get from charpos3, for 6 chars
 branch2=${branch:3:6}
 
-
 outfile0="${BASEDIR}/${LOGDIR}/compile-${datetime2}_0.log"
 outfile1="${BASEDIR}/${LOGDIR}/compile-${datetime2}_1-xst.log"
 outfile2="${BASEDIR}/${LOGDIR}/compile-${datetime2}_2-ngd.log"
@@ -104,30 +101,39 @@ echo ${branch}  >> $outfile0
 echo ${branch2} >> $outfile0
 
 # move into here so that all the output does not fill the base directory
-cd ${BASEDIR}/build
+cd ${BASEDIR}/isepn147/mega65/working
+pwd
+SCROUTDIR_FULL="${BASEDIR}/isepn147/mega65/working/${SCROUTDIR}"
 
 #
 # ISE: synthesize
 #
 datetime=`date +%Y%m%d_%H:%M:%S`
 echo "==> $datetime Starting: xst, see container.syr"
-xst ${ISE_COMMON_OPTS} -ifn "${BASEDIR}/isepn147/mega65/working/container.xst" -ofn "${BASEDIR}/build/container.syr" >> $outfile1
+xst ${ISE_COMMON_OPTS} -ifn "container.xst" -ofn "${SCROUTDIR_FULL}/container.syr" >> $outfile1
+#xst ${ISE_COMMON_OPTS} -ifn "${BASEDIR}/isepn147/mega65/working/container.xst" -ofn "${BASEDIR}/build/container.syr" >> $outfile1
 retcode=$?
 if [ $retcode -ne 0 ] ; then
-  echo "xst failed with return code $retcode" && exit 1
+  echo "cst failed with return code $retcode"
+  cat $outfile1 | grep ERROR
+  exit 1
+else
+  cat $outfile1 | grep WARN
 fi
-
-exit
 
 #
 # ISE: ngdbuild
 #
 datetime=`date +%Y%m%d_%H:%M:%S`
 echo "==> $datetime Starting: ngdbuild, see container.bld"
-ngdbuild ${ISE_COMMON_OPTS} ${ISE_NGDBUILD_OPTS} -uc ./src/vhdl/container.ucf ./isework/container.ngc ./isework/container.ngd > $outfile2
+ngdbuild ${ISE_COMMON_OPTS} ${ISE_NGDBUILD_OPTS} -uc ../../../src/vhdl/container-n4ddr.ucf ${SCROUTDIR_FULL}/container.ngc ${SCROUTDIR_FULL}/container.ngd > $outfile2
 retcode=$?
 if [ $retcode -ne 0 ] ; then
-  echo "ngdbuild failed with return code $retcode" && exit 1
+  echo "ngdbuild failed with return code $retcode"
+  cat $outfile2 | grep ERROR
+  exit 1
+else
+  cat $outfile2 | grep WARN
 fi
 
 #
@@ -135,7 +141,7 @@ fi
 #
 datetime=`date +%Y%m%d_%H:%M:%S`
 echo "==> $datetime Starting: map, see container_map.mrp"
-map ${ISE_COMMON_OPTS} ${ISE_MAP_OPTS} -o ./isework/container_map.ncd ./isework/container.ngd ./isework/container.pcf > $outfile3
+map ${ISE_COMMON_OPTS} ${ISE_MAP_OPTS} -o ${SCROUTDIR_FULL}/container_map.ncd ${SCROUTDIR_FULL}/container.ngd ${SCROUTDIR_FULL}/container.pcf > $outfile3
 retcode=$?
 if [ $retcode -ne 0 ] ; then
   echo "map failed with return code $retcode" && exit 1
@@ -146,7 +152,7 @@ fi
 #
 datetime=`date +%Y%m%d_%H:%M:%S`
 echo "==> $datetime Starting: par, see container.par"
-par ${ISE_COMMON_OPTS} ${ISE_PAR_OPTS} ./isework/container_map.ncd ./isework/container.ncd ./isework/container.pcf > $outfile4
+par ${ISE_COMMON_OPTS} ${ISE_PAR_OPTS} ${SCROUTDIR_FULL}/container_map.ncd ${SCROUTDIR_FULL}/container.ncd ${SCROUTDIR_FULL}/container.pcf > $outfile4
 retcode=$?
 if [ $retcode -ne 0 ] ; then
   echo "par failed with return code $retcode" && exit 1
@@ -157,7 +163,7 @@ fi
 #
 datetime=`date +%Y%m%d_%H:%M:%S`
 echo "==> $datetime Starting: trce, see container.twr"
-trce ${ISE_COMMON_OPTS} ${ISE_TRCE_OPTS} ./isework/container.twx ./isework/container.ncd -o ./isework/container.twr ./isework/container.pcf -ucf ./src/container.ucf > $outfile5
+trce ${ISE_COMMON_OPTS} ${ISE_TRCE_OPTS} ${SCROUTDIR_FULL}/container.twx ${SCROUTDIR_FULL}/container.ncd -o ${SCROUTDIR_FULL}/container.twr ${SCROUTDIR_FULL}/container.pcf -ucf ../../../src/container-n4ddr.ucf > $outfile5
 retcode=$?
 if [ $retcode -ne 0 ] ; then
   echo "trce failed with return code $retcode" && exit 1
@@ -168,7 +174,7 @@ fi
 #
 datetime=`date +%Y%m%d_%H:%M:%S`
 echo "==> $datetime Starting: bitgen, see container.bgn"
-bitgen ${ISE_COMMON_OPTS} -f ./isework/container.ut ./isework/container.ncd > $outfile6
+bitgen ${ISE_COMMON_OPTS} -f ${SCROUTDIR_FULL}/container.ut ${SCROUTDIR_FULL}/container.ncd > $outfile6
 retcode=$?
 if [ $retcode -ne 0 ] ; then
   echo "bitgen failed with return code $retcode" && exit 1
