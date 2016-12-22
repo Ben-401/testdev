@@ -1,0 +1,5 @@
+vhdl work "../../../src/vhdl/debugtools.vhdl"
+vhdl work "../../../src/vhdl/bensvic2.vhdl"
+vhdl work "../../../src/vhdl/machine.vhdl"
+vhdl work "../../../src/vhdl/clkgen.vhdl"
+vhdl work "../../../src/vhdl/container.vhdl"
