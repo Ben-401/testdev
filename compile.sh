@@ -115,7 +115,8 @@ xst ${ISE_COMMON_OPTS} -ifn "container.xst" -ofn "${SCROUTDIR_FULL}/container.sy
 retcode=$?
 if [ $retcode -ne 0 ] ; then
   echo "xst failed with return code $retcode" &&
-  cat $outfile1 | grep ERROR && exit 1
+  cat $outfile1 | grep ERROR
+  exit 1
 else
   cat $outfile1 | grep WARN
 fi
@@ -129,7 +130,8 @@ ngdbuild ${ISE_COMMON_OPTS} ${ISE_NGDBUILD_OPTS} -uc ../../../src/vhdl/container
 retcode=$?
 if [ $retcode -ne 0 ] ; then
   echo "ngdbuild failed with return code $retcode" &&
-  cat $outfile2 | grep ERROR && exit 1
+  cat $outfile2 | grep ERROR
+  exit 1
 else
   cat $outfile2 | grep WARN
 fi
@@ -143,7 +145,8 @@ map ${ISE_COMMON_OPTS} ${ISE_MAP_OPTS} -o ${SCROUTDIR_FULL}/container_map.ncd ${
 retcode=$?
 if [ $retcode -ne 0 ] ; then
   echo "map failed with return code $retcode" &&
-  cat $outfile3 | grep ERROR && exit 1
+  cat $outfile3 | grep ERROR
+  exit 1
 else
   cat $outfile3 | grep WARN
 fi
@@ -157,7 +160,8 @@ par ${ISE_COMMON_OPTS} ${ISE_PAR_OPTS} ${SCROUTDIR_FULL}/container_map.ncd ${SCR
 retcode=$?
 if [ $retcode -ne 0 ] ; then
   echo "par failed with return code $retcode" &&
-  cat $outfile4 | grep ERROR && exit 1
+  cat $outfile4 | grep ERROR
+  exit 1
 else
   cat $outfile4 | grep WARN
 fi
@@ -171,7 +175,8 @@ trce ${ISE_COMMON_OPTS} ${ISE_TRCE_OPTS} ${SCROUTDIR_FULL}/container.twx ${SCROU
 retcode=$?
 if [ $retcode -ne 0 ] ; then
   echo "trce failed with return code $retcode" &&
-  cat $outfile5 | grep ERROR && exit 1
+  cat $outfile5 | grep ERROR
+  exit 1
 else
   cat $outfile5 | grep WARN
 fi
@@ -181,11 +186,12 @@ fi
 #
 datetime=`date +%Y%m%d_%H:%M:%S`
 echo "==> $datetime Starting: bitgen, see container.bgn"
-bitgen ${ISE_COMMON_OPTS} -f ${SCROUTDIR_FULL}/container.ut ${SCROUTDIR_FULL}/container.ncd > $outfile6
+bitgen ${ISE_COMMON_OPTS} -f container.ut ${SCROUTDIR_FULL}/container.ncd > $outfile6
 retcode=$?
 if [ $retcode -ne 0 ] ; then
   echo "bitgen failed with return code $retcode" &&
-  cat $outfile6 | grep ERROR && exit 1
+  cat $outfile6 | grep ERROR
+  exit 1
 else
   cat $outfile6 | grep WARN
 fi
