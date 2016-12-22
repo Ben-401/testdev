@@ -4,26 +4,33 @@
 # this is done to stop the ISE-GUI from overwriting the file, which may be
 # causing the compile-script to fail due to invalid relative addresses.
 # a possible fix is to move the mega65.gise (ISE project file) into ./isework
-ls -al    isework/container.xst
-chmod a-w isework/container.xst
-ls -al    isework/container.xst
+# i dont think we need to do this now
+#ls -al    isework/container.xst
+#chmod a-w isework/container.xst
+#ls -al    isework/container.xst
+
+BASEDIR=$(pwd)
 
 # ensure these directory exists, if not, make them
 LOGDIR="build-logs"
-if test ! -e    "./${LOGDIR}"; then
-  echo "Creating ./${LOGDIR}"
-  mkdir          ./${LOGDIR}
+if test ! -e    "${BASEDIR}/${LOGDIR}"; then
+  echo "Creating ${BASEDIR}/${LOGDIR}"
+  mkdir          ${BASEDIR}/${LOGDIR}
 fi
-if test ! -e    "./sdcard-files"; then
-  echo "Creating ./sdcard-files"
-  mkdir          ./sdcard-files
+if test ! -e    "${BASEDIR}/build"; then
+  echo "Creating ${BASEDIR}/build"
+  mkdir          ${BASEDIR}/build
 fi
-if test ! -e    "./sdcard-files/old-bitfiles"; then
-  echo "Creating ./sdcard-files/old-bitfiles"
-  mkdir          ./sdcard-files/old-bitfiles
+if test ! -e    "${BASEDIR}/sdcard-files"; then
+  echo "Creating ${BASEDIR}/sdcard-files"
+  mkdir          ${BASEDIR}/sdcard-files
+fi
+if test ! -e    "${BASEDIR}/sdcard-files/old-bitfiles"; then
+  echo "Creating ${BASEDIR}/sdcard-files/old-bitfiles"
+  mkdir          ${BASEDIR}/sdcard-files/old-bitfiles
 fi
 
-( cd src ; make generated_vhdl firmware ../doc/iomap.txt tools utilities roms)
+#( cd src ; make generated_vhdl firmware ../doc/iomap.txt tools utilities roms)
 retcode=$?
 
 if [ $retcode -ne 0 ] ; then
@@ -59,13 +66,13 @@ branch=`git status -b -s | head -n 1`
 branch2=${branch:3:6}
 
 
-outfile0="${LOGDIR}/compile-${datetime2}_0.log"
-outfile1="${LOGDIR}/compile-${datetime2}_1-xst.log"
-outfile2="${LOGDIR}/compile-${datetime2}_2-ngd.log"
-outfile3="${LOGDIR}/compile-${datetime2}_3-map.log"
-outfile4="${LOGDIR}/compile-${datetime2}_4-par.log"
-outfile5="${LOGDIR}/compile-${datetime2}_5-trc.log"
-outfile6="${LOGDIR}/compile-${datetime2}_6-bit.log"
+outfile0="${BASEDIR}/${LOGDIR}/compile-${datetime2}_0.log"
+outfile1="${BASEDIR}/${LOGDIR}/compile-${datetime2}_1-xst.log"
+outfile2="${BASEDIR}/${LOGDIR}/compile-${datetime2}_2-ngd.log"
+outfile3="${BASEDIR}/${LOGDIR}/compile-${datetime2}_3-map.log"
+outfile4="${BASEDIR}/${LOGDIR}/compile-${datetime2}_4-par.log"
+outfile5="${BASEDIR}/${LOGDIR}/compile-${datetime2}_5-trc.log"
+outfile6="${BASEDIR}/${LOGDIR}/compile-${datetime2}_6-bit.log"
 
 ISE_COMMON_OPTS="-intstyle ise"
 ISE_NGDBUILD_OPTS="-p xc7a100t-csg324-1 -dd _ngo -sd ipcore_dir -nt timestamp"
@@ -74,14 +81,15 @@ ISE_PAR_OPTS="-w -ol std -mt off"
 ISE_TRCE_OPTS="-v 3 -s 1 -n 3 -fastpaths -xml"
 
 # ensure these directory exists, if not, make them
-if test ! -e    "./isework/xst/"; then
-  echo "Creating ./isework/xst/"
-  mkdir          ./isework/xst/
-fi
-if test ! -e    "./isework/xst/projnav.tmp/"; then
-  echo "Creating ./isework/xst/projnav.tmp/"
-  mkdir          ./isework/xst/projnav.tmp
-fi
+# i dont think we need to do this now
+#if test ! -e    "./isework/xst/"; then
+#  echo "Creating ./isework/xst/"
+#  mkdir          ./isework/xst/
+#fi
+#if test ! -e    "./isework/xst/projnav.tmp/"; then
+#  echo "Creating ./isework/xst/projnav.tmp/"
+#  mkdir          ./isework/xst/projnav.tmp
+#fi
 
 # begin the ISE build:
 echo "Beginning the ISE build."
@@ -95,16 +103,21 @@ echo ${gitstring} > $outfile0
 echo ${branch}  >> $outfile0
 echo ${branch2} >> $outfile0
 
+# move into here so that all the output does not fill the base directory
+cd ${BASEDIR}/build
+
 #
 # ISE: synthesize
 #
 datetime=`date +%Y%m%d_%H:%M:%S`
 echo "==> $datetime Starting: xst, see container.syr"
-xst ${ISE_COMMON_OPTS} -ifn "./isework/container.xst" -ofn "./isework/container.syr" >> $outfile1
+xst ${ISE_COMMON_OPTS} -ifn "${BASEDIR}/isepn147/mega65/working/container.xst" -ofn "${BASEDIR}/build/container.syr" >> $outfile1
 retcode=$?
 if [ $retcode -ne 0 ] ; then
   echo "xst failed with return code $retcode" && exit 1
 fi
+
+exit
 
 #
 # ISE: ngdbuild
