@@ -223,17 +223,28 @@ echo "From $outfile6: =================================================" >> $out
  echo "Nil" >> $outfile0
 
 echo " "
-# now prepare the sdcard-output directory by moving any existing bit-file
-for filename in ./sdcard-files/*.bit; do
-  echo "mv ${filename} ./sdcard-files/old-bitfiles"
-        mv ${filename} ./sdcard-files/old-bitfiles
-done
+
+# now move back to the toplevel directory
+cd ${BASEDIR}
+
+## now prepare the sdcard-output directory by moving any existing bit-file
+if test -e                ./sdcard-files/*.bit; then
+  echo "Found OLD bit files, so will move them."
+  for filename in         ./sdcard-files/*.bit; do
+    echo " mv ${filename} ./sdcard-files/old-bitfiles"
+           mv ${filename} ./sdcard-files/old-bitfiles
+  done
+else
+  echo "No existing bit files found."
+fi
+echo " "
+
 # now copy the bit-file to the sdcard-output directory, and timestamp it with time and git-status
-echo "cp ./isework/container.bit ./sdcard-files/bit${datetime2}_${branch2}_${gitstring}.bit"
-cp       ./isework/container.bit ./sdcard-files/bit${datetime2}_${branch2}_${gitstring}.bit
+echo "cp ${SCROUTDIR_FULL}/container.bit ./sdcard-files/bit${datetime2}_${branch2}_${gitstring}.bit"
+cp       ${SCROUTDIR_FULL}/container.bit ./sdcard-files/bit${datetime2}_${branch2}_${gitstring}.bit
 # and the KICKUP file
-echo "cp ./src/KICKUP.M65 ./sdcard-files"
-      cp ./src/KICKUP.M65 ./sdcard-files
+#echo "cp ./src/KICKUP.M65 ./sdcard-files"
+#      cp ./src/KICKUP.M65 ./sdcard-files
 
 echo " "
 ls -al ./sdcard-files
