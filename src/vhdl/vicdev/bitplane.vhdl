@@ -63,9 +63,7 @@ begin
 
   process (sysclk, pixelclock_en)
   begin
-    if sysclk'event and sysclk = '1' then -- was pixelclock
-	 if (pixelclock_en = '1') then
-
+    if (rising_edge(sysclk) and (pixelclock_en='1')) then -- was pixelclock
       -- XXX Note that the buffer handling, both on input and output, assumes
       -- that new bytes are not supplied on successive clocks, nor that new
       -- pixels are required on successive clocks.  This keeps the logic

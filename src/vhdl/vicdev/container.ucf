@@ -8,6 +8,10 @@ NET "clk_in"   LOC = "E3"	| IOSTANDARD = "LVCMOS33";					#Bank = 35, Pin name = 
 NET "clk_in" TNM_NET = clk_in;
 TIMESPEC TS_clk_in = PERIOD clk_in 100 MHz HIGH 50%; 
 
+#TIMESPEC TS_clkgen0_clkout1_intA = PERIOD TIMEGRP "clkgen0_clkout1_intA" TS_clk_in * 1.48214286 HIGH 50%; 
+
+TIMESPEC TS_02 = FROM "clk_in" TO "clkgen0_clkout1_intA" TIG;
+
 
 ## Switches
 NET "sw_in0"          LOC=J15 | IOSTANDARD=LVCMOS33; #IO_L24N_T3_RS0_15
