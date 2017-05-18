@@ -16,7 +16,8 @@ use UNISIM.VComponents.all;
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
 
 entity container is
-  Port ( clk_in : STD_LOGIC;         
+  Port ( 
+        clk_in : STD_LOGIC;         
          btnCpuReset_in : in  STD_LOGIC; -- normally high, active low
 --         irq : in  STD_LOGIC;
 --         nmi : in  STD_LOGIC;
