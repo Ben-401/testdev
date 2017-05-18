@@ -338,92 +338,92 @@ begin
   -- combine the three reset sources
   mrst_s <= (not locked_int) and (dbg_intA or dbg_intB);
   mrst_l <= (not locked_int) and dbg_intB;
-  -- pipeline the two reset signals to help with placement
-  process(clk100buf) is
-  begin
-    if rising_edge(clk100buf) then
-      mrst_s_A <= mrst_s;
-      mrst_s_B <= mrst_s_A;
---      mrst_s_C <= mrst_s_B;
---      mrst_s_D <= mrst_s_C;
-      mrst_l_A <= mrst_l;
-      mrst_l_B <= mrst_l_A;
---      mrst_l_C <= mrst_l_B;
---      mrst_l_D <= mrst_l_C;
-    end if;
-  end process;
+--  -- pipeline the two reset signals to help with placement
+--  process(clk100buf) is
+--  begin
+--    if rising_edge(clk100buf) then
+--      mrst_s_A <= mrst_s;
+--      mrst_s_B <= mrst_s_A;
+----      mrst_s_C <= mrst_s_B;
+----      mrst_s_D <= mrst_s_C;
+--      mrst_l_A <= mrst_l;
+--      mrst_l_B <= mrst_l_A;
+----      mrst_l_C <= mrst_l_B;
+----      mrst_l_D <= mrst_l_C;
+--    end if;
+--  end process;
 
   -- sync resets to clk1 clock domain
-  process(clk1int, mrst_s_B, mrst_s_clk1) is
+  process(clk1int, mrst_s) is
   begin
 
     -- short-press
---    if (mrst_s_B = '1') then
---      mrst_s_clk1 <= (others => '1');
---    else
+    if (mrst_s = '1') then
+      mrst_s_clk1 <= (others => '1');
+    else
       if rising_edge(clk1int) then
-        mrst_s_clk1(1) <= mrst_s_B;
+        mrst_s_clk1(1) <= '0';
         mrst_s_clk1(0) <= mrst_s_clk1(1);
       end if;
---    end if;
+    end if;
     
   end process;
 
   -- sync resets to clk1 clock domain
-  process(clk1int, mrst_l_B, mrst_l_clk1) is
+  process(clk1int, mrst_l) is
   begin
 
   -- long-press
---    if (mrst_l_B = '1') then
---      mrst_l_clk1 <= (others => '1');
---    else
+    if (mrst_l = '1') then
+      mrst_l_clk1 <= (others => '1');
+    else
       if rising_edge(clk1int) then
-        mrst_l_clk1(1) <= mrst_l_B;
+        mrst_l_clk1(1) <= '0';
         mrst_l_clk1(0) <= mrst_l_clk1(1);
       end if;
---    end if;
+    end if;
     
   end process;
   
 
-  -- sync resets to clk1 clock domain
-  process(clk1int, mrst_l_B, mrst_l_clk1) is
-  begin
-
-  -- long-press
-    if (mrst_l_clk1(0) = '1') then
-      mrst_l_clk1int <= (others => '1');
-    else
-      if rising_edge(clk1int) then
-        mrst_l_clk1int(1) <= '0';
-        mrst_l_clk1int(0) <= mrst_l_clk1int(1);
-      end if;
-    end if;
-    
-  end process;
-
-  -- sync resets to clk1 clock domain
-  process(clk1int, mrst_l_B, mrst_l_clk1) is
-  begin
-
-  -- long-press
-    if (mrst_l_clk1(0) = '1') then
-      mrst_l_clk1int <= (others => '1');
-    else
-      if rising_edge(clk1int) then
-        mrst_l_clk1int(1) <= '0';
-        mrst_l_clk1int(0) <= mrst_l_clk1int(1);
-      end if;
-    end if;
-    
-  end process;
+--  -- sync resets to clk1 clock domain
+--  process(clk1int, mrst_l_B, mrst_l_clk1) is
+--  begin
+--
+--  -- long-press
+--    if (mrst_l_clk1(0) = '1') then
+--      mrst_l_clk1int <= (others => '1');
+--    else
+--      if rising_edge(clk1int) then
+--        mrst_l_clk1int(1) <= '0';
+--        mrst_l_clk1int(0) <= mrst_l_clk1int(1);
+--      end if;
+--    end if;
+--    
+--  end process;
+--
+--  -- sync resets to clk1 clock domain
+--  process(clk1int, mrst_l_B, mrst_l_clk1) is
+--  begin
+--
+--  -- long-press
+--    if (mrst_l_clk1(0) = '1') then
+--      mrst_l_clk1int <= (others => '1');
+--    else
+--      if rising_edge(clk1int) then
+--        mrst_l_clk1int(1) <= '0';
+--        mrst_l_clk1int(0) <= mrst_l_clk1int(1);
+--      end if;
+--    end if;
+--    
+--  end process;
 
   
   -- generate a counter that can be used to derive the slower clocks
   -- this one is used to generate the "/3"
   process(clk1int, mrst_l_clk1) is
   begin
-    if mrst_l_clk1int(0) = '1' then -- reset clause, wait for MMCM to lock
+    if mrst_l_clk1(0) = '1' then -- reset clause, wait for MMCM to lock
       clk1divcnt <= "00";
     elsif rising_edge(clk1int) then
       if clk1divcnt >= "10" then
@@ -444,7 +444,7 @@ begin
   -- DEBUG: generate a TFF from clk1divX_en
   process(clk1int, mrst_l_clk1) is
   begin
-    if mrst_l_clk1int(0) = '1' then -- reset clause
+    if mrst_l_clk1(0) = '1' then -- reset clause
       dbg_ff1 <= '0';
     elsif rising_edge(clk1int) then
       if (clk1div3_en = '1') then
@@ -477,7 +477,7 @@ begin
   -- basically a up-counter, forever loops
   process(clk1int, mrst_l_clk1, bounce_counter) is
   begin
-    if (mrst_l_clk1int(0) = '1') then
+    if (mrst_l_clk1(0) = '1') then
       -- system is in reset until locked_int becomes high
       bounce_counter <= (others => '0');
     elsif rising_edge(clk1int) then
@@ -488,7 +488,7 @@ begin
   -- sample the metastable inputs whenever the bounce_counter is '1'
   process(clk1int, mrst_l_clk1) is
   begin
-    if (mrst_l_clk1int(0) = '1') then
+    if (mrst_l_clk1(0) = '1') then
       -- system is in reset until locked_int becomes high
       sw_sample <= (others => '0');
     elsif rising_edge(clk1int) then
@@ -516,7 +516,7 @@ begin
   machine0: machine
     port map (
       sysclk => clk1int,
-      reset2 => mrst_l_clk1int(0), -- normally low, reset=1
+      reset2 => mrst_l_clk1(0), -- normally low, reset=1
 
       pixelclock_en => '1',
       cpuioclock_en => clk1div3_en,

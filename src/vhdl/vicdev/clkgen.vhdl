@@ -35,8 +35,8 @@ architecture Behavioral of clkgen is
   signal resetextin_meta0 : std_logic := '1';
 
   -- debounce registers
-  signal bounce_counter : unsigned(7 downto 0) := (others => '0');
-  signal reset_sample : std_logic_vector(7 downto 0) := (others => '1');-- initially pulled-up
+  signal bounce_counter : unsigned(31 downto 0) := (others => '0');
+  signal reset_sample : std_logic_vector(15 downto 0) := (others => '1');-- initially pulled-up
   signal reset_short_press : std_logic := '1'; -- initially pulled-up
   signal reset_long_press  : std_logic := '1'; -- initially pulled-up
 
@@ -90,16 +90,16 @@ begin
     if rising_edge(clk_in) then
       if bounce_counter = (bounce_counter'HIGH) then
         -- sample bouncing reset input signal (POST METASTABLE)
---        reset_sample(15) <= resetextin_meta0; -- normally high, active low
---        reset_sample(14) <= reset_sample(15);
---        reset_sample(13) <= reset_sample(14);
---        reset_sample(12) <= reset_sample(13);
---        reset_sample(11) <= reset_sample(12);
---        reset_sample(10) <= reset_sample(11);
---        reset_sample(9) <= reset_sample(10);
---        reset_sample(8) <= reset_sample(9);
---        reset_sample(7) <= reset_sample(8);
-        reset_sample(7) <= resetextin_meta0; -- normally high, active low
+        reset_sample(15) <= resetextin_meta0; -- normally high, active low
+        reset_sample(14) <= reset_sample(15);
+        reset_sample(13) <= reset_sample(14);
+        reset_sample(12) <= reset_sample(13);
+        reset_sample(11) <= reset_sample(12);
+        reset_sample(10) <= reset_sample(11);
+        reset_sample(9) <= reset_sample(10);
+        reset_sample(8) <= reset_sample(9);
+        reset_sample(7) <= reset_sample(8);
+--        reset_sample(7) <= resetextin_meta0; -- normally high, active low
         reset_sample(6) <= reset_sample(7);
         reset_sample(5) <= reset_sample(6);
         reset_sample(4) <= reset_sample(5);
@@ -123,14 +123,14 @@ begin
   begin
     if rising_edge(clk_in) then
       if reset_short_press = '0' then        -- normally LOW
-        if reset_sample(7 downto 4) = "0000" then   -- button pressed, signal stable
+        if reset_sample(15 downto 14) = "00" then   -- button pressed, signal stable
           reset_short_press <= '1';          -- internal circuit becomes active-high-RESET
         else
           reset_short_press <= reset_short_press;
         end if;
       else
       -- reset_short_press = '1'             -- internal circuit is in active-high-RESET
-        if reset_sample(7 downto 4) = "1111" then   -- wait for button released, signal stable
+        if reset_sample(15 downto 14) = "11" then   -- wait for button released, signal stable
           reset_short_press <= '0';          -- then synchronously release the active-high reset-signal
         else
           reset_short_press <= reset_short_press;
@@ -143,14 +143,14 @@ begin
   begin
     if rising_edge(clk_in) then
       if reset_long_press = '0' then        -- normally LOW
-        if reset_sample = "00000000" then   -- button pressed, signal stable
+        if reset_sample = "0000000000000000" then   -- button pressed, signal stable
           reset_long_press <= '1';          -- internal circuit becomes active-high-RESET
         else
           reset_long_press <= reset_long_press;
         end if;
       else
       -- reset_long_press = '1'             -- internal circuit is in active-high-RESET
-        if reset_sample = "11111111" then   -- wait for button released, signal stable
+        if reset_sample = "1111111111111111" then   -- wait for button released, signal stable
           reset_long_press <= '0';          -- then synchronously release the active-high reset-signal
         else
           reset_long_press <= reset_long_press;
