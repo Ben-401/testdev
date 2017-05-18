@@ -55,7 +55,8 @@ use work.debugtools.all;
 entity bensvic2 is
   Port (
     sysclk        : in std_logic;
-	 reset2        : in std_logic;
+	 reset_S        : in std_logic;
+	 reset_L        : in std_logic;
 	 pixelclock_en : in std_logic;
 	 cpuioclock_en : in std_logic;
     
@@ -118,13 +119,13 @@ architecture Behavioral of bensvic2 is
   
 begin
 
-  process (reset2, sysclk, pixelclock_en)
+  process (reset_L, sysclk, pixelclock_en)
 
 --    VARIABLE hc : std_logic_vector(16 downto 0);--INTEGER RANGE 0 TO h_period := 0;
 --    VARIABLE vc : std_logic_vector(16 downto 0);--INTEGER RANGE 0 TO h_period := 0;
 
   begin
-    if (reset2 = '0') then
+    if (reset_L = '1') then
       hc0us <= (others => '0');
       vc0us <= (others => '0');
     elsif (rising_edge(sysclk) and pixelclock_en = '1') then
@@ -175,10 +176,10 @@ begin
 --		end if;
 --	 end if;
 
-  process (reset2, sysclk, pixelclock_en)
+  process (reset_L, sysclk, pixelclock_en)
   begin  
 	 
-    if (reset2 = '0') then
+    if (reset_L = '1') then
       hsync <= NOT h_pol;  --deassert horizontal sync
       vsync <= NOT v_pol;  --deassert vertical sync
     elsif (rising_edge(sysclk) and pixelclock_en = '1') then
@@ -202,9 +203,9 @@ begin
     end if;
   end process;
 
-  process (reset2, sysclk, pixelclock_en)
+  process (reset_S, reset_L, sysclk, pixelclock_en)
   begin
-    if (reset2 = '0') then
+    if (reset_L = '1') then
       outtype0 <= "00";
     elsif (rising_edge(sysclk) and pixelclock_en = '1') then
       --set pixel coordinates
@@ -222,17 +223,23 @@ begin
         outtype0 <= "00";
       end if;
 
-      vgar_int   <= hc0us(6 downto 3);--to_unsigned(hc1v,4);         --set horiztonal pixel coordinate
-      vgag_int <= vc0us(6 downto 3);--to_unsigned(vc1v,4);         --set horiztonal pixel coordinate
-      vgab_int  <= hc0us(7 downto 4);--to_unsigned(vc1v,4);         --set horiztonal pixel coordinate
+      if (reset_S = '1') then
+        vgar_int   <= hc0us(6 downto 3);--to_unsigned(hc1v,4);         --set horiztonal pixel coordinate
+        vgag_int <= vc0us(6 downto 3);--to_unsigned(vc1v,4);         --set horiztonal pixel coordinate
+        vgab_int  <= hc0us(7 downto 4);--to_unsigned(vc1v,4);         --set horiztonal pixel coordinate
+      else
+        vgab_int   <= hc0us(6 downto 3);--to_unsigned(hc1v,4);         --set horiztonal pixel coordinate
+        vgar_int <= vc0us(6 downto 3);--to_unsigned(vc1v,4);         --set horiztonal pixel coordinate
+        vgag_int  <= hc0us(7 downto 4);--to_unsigned(vc1v,4);         --set horiztonal pixel coordinate
+      end if;
       
       
     end if;
   end process;
 		  
-  process (reset2, sysclk, pixelclock_en)
+  process (reset_L, sysclk, pixelclock_en)
   begin
-    if (reset2 = '0') then
+    if (reset_L = '1') then
       vgared <= to_unsigned(0,4);
       vgagreen <= to_unsigned(0,4);
       vgablue <= to_unsigned(0,4);

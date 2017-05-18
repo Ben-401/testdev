@@ -95,8 +95,8 @@ architecture Behavioral of container is
       clk0_out : out std_logic;
       clk1_out : out std_logic;
       locked_out : out std_logic;
-      dbg_rstA : out std_logic;
-      dbg_rstB : out std_logic
+	 reset_out_A : out std_logic; -- short-press
+	 reset_out_B : out std_logic  -- long-press
     );
   end component;
 
@@ -110,53 +110,46 @@ architecture Behavioral of container is
   signal sw_int :    std_logic_vector(15 downto 0);
 --  signal led_int :    std_logic_vector(15 downto 0);
 
-  signal mrst_s : std_logic;
-  signal mrst_l : std_logic;
-
-  signal mrst_s_A : std_logic;
-  signal mrst_s_B : std_logic;
-  signal mrst_s_C : std_logic;
-  signal mrst_s_D : std_logic;
-  signal mrst_l_A : std_logic;
-  signal mrst_l_B : std_logic;
-  signal mrst_l_C : std_logic;
-  signal mrst_l_D : std_logic;
-
-  -- reset synchroniser for clk1
-  signal mrst_s_clk1 : std_logic_vector(1 downto 0);
-  signal mrst_l_clk1 : std_logic_vector(1 downto 0);
-  signal mrst_s_clk1int : std_logic_vector(1 downto 0);
-  signal mrst_l_clk1int : std_logic_vector(1 downto 0);
-  
-    
-
+  -- buffered external OSC 100mhz
   signal clk100buf : std_logic;
 
---  signal clock100mhz : std_logic; -- for LAN (TBC)
-  signal clk1int : std_logic; -- primary clock is 148.214mhz
-  signal clk1divcnt : unsigned(1 downto 0); -- counter for clock-divisor(s)
-  signal clk1div3_en : std_logic;
+  -- toplevel reset signals (clk100buf domain)
+  signal reset_int_A : std_logic;
+  signal reset_int_B : std_logic;
+  signal mrst_s_common : std_logic;
+  signal mrst_l_common : std_logic;
 
+  -- reset synchroniser (for clk1 domain)
+  signal CLK1mrst_s : std_logic_vector(1 downto 0);
+  signal CLK1mrst_l : std_logic_vector(1 downto 0);
+  signal CLK1mrst_s_out : std_logic;
+  signal CLK1mrst_l_out : std_logic;
+
+
+  -- internal locked signal from MMCM
   signal locked_int : std_logic;
 
-  signal dbg_intA : std_logic;
-  signal dbg_intB : std_logic;
+  -- buffered internal CLK from MMCM-CLK1
+  signal CLK1int : std_logic; -- primary clock is 148.214mhz
+  signal CLK1divcnt : unsigned(1 downto 0); -- counter for clock-divisor(s)
+  signal CLK1div3_en : std_logic;
 
-  signal dbg_ff1 : std_logic;
-  signal dbg_ff2 : std_logic;
+  -- signals for "CLK1 domain" only
+  -- debounce counter for external signals
+  -- initialise to 4 so that after 4x CLK1's, the inputs are sampled
+  -- this is required as: 2x clocks for meta FFs, plus 2x spares
+  -- also assumes reset is not released until ATLEAST 4x CLK1s after config
+  -- which allows external inputs to be fed into FFs before reset release
+  signal CLK1sample_counter : unsigned(7 downto 0) := "00000100";
 
-
-
-
-  -- what is switch polarity?
-  signal sw_meta1 : std_logic_vector(15 downto 0);
-  signal sw_meta0 : std_logic_vector(15 downto 0);
-  -- debounce counter
-  signal bounce_counter : unsigned(7 downto 0) := "00000000";
-
-
-  signal sw_sample : std_logic_vector(15 downto 0) := "0000000000000000";
+  -- switch inputs
+  signal CLK1sw_meta1 : std_logic_vector(15 downto 0);
+  signal CLK1sw_meta0 : std_logic_vector(15 downto 0);
+  signal CLK1sw_sample : std_logic_vector(15 downto 0);
   
+  -- DEBUG signals
+  signal CLK1dbg_ff1 : std_logic;
+
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
 
   component machine is
@@ -171,7 +164,8 @@ architecture Behavioral of container is
 --         btnCpuReset : in  STD_LOGIC;
 
     sysclk : in std_logic;
-    reset2 : in std_logic;
+    reset_S : std_logic;
+    reset_L : std_logic;
     pixelclock_en : in std_logic;
     cpuioclock_en : in std_logic;
 
@@ -331,125 +325,54 @@ begin
     clk0_out => open,
     clk1_out => clk1int,
     locked_out => locked_int, -- see below for description
-    dbg_rstA => dbg_intA,
-    dbg_rstB => dbg_intB
+    reset_out_A => reset_int_A,
+    reset_out_B => reset_int_B
   );
   
   -- combine the three reset sources
-  mrst_s <= (not locked_int) and (dbg_intA or dbg_intB);
-  mrst_l <= (not locked_int) and dbg_intB;
---  -- pipeline the two reset signals to help with placement
---  process(clk100buf) is
---  begin
---    if rising_edge(clk100buf) then
---      mrst_s_A <= mrst_s;
---      mrst_s_B <= mrst_s_A;
-----      mrst_s_C <= mrst_s_B;
-----      mrst_s_D <= mrst_s_C;
---      mrst_l_A <= mrst_l;
---      mrst_l_B <= mrst_l_A;
-----      mrst_l_C <= mrst_l_B;
-----      mrst_l_D <= mrst_l_C;
---    end if;
---  end process;
+  -- all are ACTIVE-HIGH and should be considered as asynchronous
+  mrst_s_common <= (not locked_int) or reset_int_A or reset_int_B;
+  mrst_l_common <= (not locked_int) or reset_int_B;
 
+  -- ######
+  -- ## CLK1 domain
+  -- ######
+  
   -- sync resets to clk1 clock domain
-  process(clk1int, mrst_s) is
+  -- using async assert, and sync deassert
+  --
+  -- short-press
+  process(CLK1int, mrst_s_common) is
   begin
-
-    -- short-press
-    if (mrst_s = '1') then
-      mrst_s_clk1 <= (others => '1');
+    if (mrst_s_common = '1') then
+      CLK1mrst_s <= (others => '1'); -- assert reset
     else
       if rising_edge(clk1int) then
-        mrst_s_clk1(1) <= '0';
-        mrst_s_clk1(0) <= mrst_s_clk1(1);
+        CLK1mrst_s(1) <= '0'; -- deassert
+        CLK1mrst_s(0) <= CLK1mrst_s(1);
       end if;
     end if;
-    
   end process;
-
-  -- sync resets to clk1 clock domain
-  process(clk1int, mrst_l) is
-  begin
-
+  --
   -- long-press
-    if (mrst_l = '1') then
-      mrst_l_clk1 <= (others => '1');
+  process(CLK1int, mrst_l_common) is
+  begin
+    if (mrst_l_common = '1') then
+      CLK1mrst_l <= (others => '1'); -- assert reset
     else
-      if rising_edge(clk1int) then
-        mrst_l_clk1(1) <= '0';
-        mrst_l_clk1(0) <= mrst_l_clk1(1);
-      end if;
-    end if;
-    
-  end process;
-  
-
---  -- sync resets to clk1 clock domain
---  process(clk1int, mrst_l_B, mrst_l_clk1) is
---  begin
---
---  -- long-press
---    if (mrst_l_clk1(0) = '1') then
---      mrst_l_clk1int <= (others => '1');
---    else
---      if rising_edge(clk1int) then
---        mrst_l_clk1int(1) <= '0';
---        mrst_l_clk1int(0) <= mrst_l_clk1int(1);
---      end if;
---    end if;
---    
---  end process;
---
---  -- sync resets to clk1 clock domain
---  process(clk1int, mrst_l_B, mrst_l_clk1) is
---  begin
---
---  -- long-press
---    if (mrst_l_clk1(0) = '1') then
---      mrst_l_clk1int <= (others => '1');
---    else
---      if rising_edge(clk1int) then
---        mrst_l_clk1int(1) <= '0';
---        mrst_l_clk1int(0) <= mrst_l_clk1int(1);
---      end if;
---    end if;
---    
---  end process;
-
-  
-  -- generate a counter that can be used to derive the slower clocks
-  -- this one is used to generate the "/3"
-  process(clk1int, mrst_l_clk1) is
-  begin
-    if mrst_l_clk1(0) = '1' then -- reset clause, wait for MMCM to lock
-      clk1divcnt <= "00";
-    elsif rising_edge(clk1int) then
-      if clk1divcnt >= "10" then
-        clk1divcnt <= "00";
-        clk1div3_en <= '1';
-      else
-        clk1divcnt <= clk1divcnt + "01";
-        clk1div3_en <= '0';
+      if rising_edge(CLK1int) then
+        CLK1mrst_l(1) <= '0'; -- deassert
+        CLK1mrst_l(0) <= CLK1mrst_l(1);
       end if;
     end if;
   end process;
-
---  -- 0th-bit of clkdiv is clk/2
---  clk2div_en <= '1';--when (clkdiv(0) = '1') else '0';
---  -- 3-bit counter overflows every 8 clk's, or clk/8
---  clk8div_en <= '1' when (clkdiv = "111" ) else '0';
-
-  -- DEBUG: generate a TFF from clk1divX_en
-  process(clk1int, mrst_l_clk1) is
+  --
+  -- ensure both 's' and 'l' resets are released synchronously on the same edge
+  process(CLK1int, CLK1mrst_s, CLK1mrst_l) is
   begin
-    if mrst_l_clk1(0) = '1' then -- reset clause
-      dbg_ff1 <= '0';
-    elsif rising_edge(clk1int) then
-      if (clk1div3_en = '1') then
-        dbg_ff1 <= not dbg_ff1;
-      end if;
+    if rising_edge(CLK1int) then
+      CLK1mrst_s_out <= CLK1mrst_l(0) or CLK1mrst_s(0); -- 's' is asserted while 'l' is asserted
+      CLK1mrst_l_out <= CLK1mrst_l(0);
     end if;
   end process;
 
@@ -465,61 +388,86 @@ begin
 
   -- metastability for the external inputs
   -- use shift registers, no reset clause
-  process (clk1int, mrst_l_clk1) is
+  process (CLK1int) is
   begin
-    if rising_edge(clk1int) then
-      sw_meta1 <= sw_int; -- the "SW"itch bus (15..0)
-      sw_meta0 <= sw_meta1;
+    if rising_edge(CLK1int) then
+      -- the "SW"itch bus (15..0)
+      CLK1sw_meta1 <= sw_int;
+      CLK1sw_meta0 <= CLK1sw_meta1;
+        -- insert buttons here below
     end if;
   end process;
   
   -- counter to minimise debouncing effects on the inputs
-  -- basically a up-counter, forever loops
-  process(clk1int, mrst_l_clk1, bounce_counter) is
+  -- basically a down-counter, forever loops
+  process(CLK1int, CLK1sample_counter) is
   begin
-    if (mrst_l_clk1(0) = '1') then
-      -- system is in reset until locked_int becomes high
-      bounce_counter <= (others => '0');
-    elsif rising_edge(clk1int) then
-      bounce_counter <= bounce_counter + 1;
+    if rising_edge(CLK1int) then
+      CLK1sample_counter <= CLK1sample_counter - 1;
     end if;
-  end process;  
+  end process;
 
-  -- sample the metastable inputs whenever the bounce_counter is '1'
-  process(clk1int, mrst_l_clk1) is
+  -- sample the metastable inputs whenever the sample_counter is '0'
+  -- use shift registers, no reset clause
+  process(CLK1int) is
   begin
-    if (mrst_l_clk1(0) = '1') then
-      -- system is in reset until locked_int becomes high
-      sw_sample <= (others => '0');
-    elsif rising_edge(clk1int) then
-      if bounce_counter = "11111111" then
+    if rising_edge(CLK1int) then
+      if CLK1sample_counter = "00000000" then
         -- sample bouncing switch input signals (POST METASTABLE)
-        sw_sample <= sw_meta0;
-      else
-        sw_sample <= sw_sample; -- else hold sample steady
+        CLK1sw_sample <= CLK1sw_meta0;
+        -- insert buttons here below
       end if;
     end if;
   end process;
 
-  ja1_out <= dbg_intA;
-  ja2_out <= dbg_intB;
-  ja3_out <= btnCpuReset_in;
+  -- generate a counter that can be used to derive the slower clocks
+  -- this one is used to generate the "/3"
+  process(CLK1int, CLK1mrst_l_out) is
+  begin
+    if CLK1mrst_l_out = '1' then -- reset clause, wait for MMCM to lock
+      CLK1divcnt <= "00";
+    elsif rising_edge(CLK1int) then
+      if CLK1divcnt >= "10" then
+        CLK1divcnt <= "00";
+        CLK1div3_en <= '1';
+      else
+        CLK1divcnt <= CLK1divcnt + "01";
+        CLK1div3_en <= '0';
+      end if;
+    end if;
+  end process;
+
+  -- DEBUG: generate a TFF from clk1div3_en
+  process(CLK1int, CLK1mrst_l_out) is
+  begin
+    if CLK1mrst_l_out = '1' then -- reset clause
+      CLK1dbg_ff1 <= '0';
+    elsif rising_edge(CLK1int) then
+      if (CLK1div3_en = '1') then
+        CLK1dbg_ff1 <= not CLK1dbg_ff1;
+      end if;
+    end if;
+  end process;
+  
+  ja1_out <= btnCpuReset_in;
+  ja2_out <= reset_int_A;
+  ja3_out <= reset_int_B;
   ja4_out <= locked_int;
   
-  ja7_out <= '1';--clock100mhz;
-  ja8_out <= '1';
-  ja9_out <= dbg_ff1;
-  jaa_out <= dbg_ff2;
+  ja7_out <= '1';
+  ja8_out <= CLK1mrst_s_out;
+  ja9_out <= CLK1mrst_l_out;
+  jaa_out <= CLK1dbg_ff1;
   
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
   
   machine0: machine
     port map (
-      sysclk => clk1int,
-      reset2 => mrst_l_clk1(0), -- normally low, reset=1
-
+      sysclk => CLK1int,
+      reset_S => CLK1mrst_s_out, -- normally low, reset=1
+      reset_L => CLK1mrst_l_out, -- normally low, reset=1
       pixelclock_en => '1',
-      cpuioclock_en => clk1div3_en,
+      cpuioclock_en => CLK1div3_en,
 		
 --      pixelclock2x    => open,
 --      pixelclock      => open,
@@ -532,8 +480,8 @@ begin
 --		
 --      btncpureset => locked_int, -- locked is active high
 		
-      irq => sw_meta0(0),
-      nmi => sw_meta0(1),
+      irq => CLK1sw_sample(0),
+      nmi => CLK1sw_sample(1),
 
 --      no_kickstart => '0',
 --      ddr_counter => ddr_counter,
@@ -625,7 +573,7 @@ begin
 --      fpga_temperature => fpga_temperature,
 -- machine
       led => led_out,
-      sw => sw_sample,
+      sw => CLK1sw_sample,
 --      btn => btn,
 --
 --      UART_TXD => UART_TXD,

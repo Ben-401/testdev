@@ -14,31 +14,36 @@ entity clkgen is
     reset_ext_in : in  STD_LOGIC; -- direct from external, is normally high, active low
          
     clk0_out : out std_logic; -- want this 100mhz
-    clk1_out : out std_logic; -- want this about 193.5mhz
+    clk1_out : out std_logic; -- want this about 148mhz for 1920x1080@60
 	 
     locked_out : out std_logic;
 	 
-	 dbg_rstA : out std_logic;
-	 dbg_rstB : out std_logic
+	 reset_out_A : out std_logic; -- short-press
+	 reset_out_B : out std_logic  -- long-press
 	 
   );
 end clkgen;
 
 architecture Behavioral of clkgen is
 
-  -- metastability for inputs
-  
   -- The external "CPU_Reset"-input has PULL-UP, so:
   -- normally-open  = "1"
-  -- button-pressed = "0" = active-low reset-signal  
-  signal resetextin_meta1 : std_logic := '1'; -- initially pull-up
+  -- button-pressed = "0" = active-low reset-signal
+  -- we need metastability registers on this EXTERNAL input
+  signal resetextin_meta2 : std_logic := '1'; -- initially pull-up
+  signal resetextin_meta1 : std_logic := '1';
   signal resetextin_meta0 : std_logic := '1';
+  
+  -- registers to debounce the external input
+  -- set "bounce_counter" duration to filter the bounce
+  signal bounce_counter  : unsigned(7 downto 0) := (others => '0'); -- 8-bit @ 10ns = 2.56us
 
-  -- debounce registers
-  signal bounce_counter : unsigned(31 downto 0) := (others => '0');
-  signal reset_sample : std_logic_vector(15 downto 0) := (others => '1');-- initially pulled-up
-  signal reset_short_press : std_logic := '1'; -- initially pulled-up
-  signal reset_long_press  : std_logic := '1'; -- initially pulled-up
+  -- counter to detect a long-press of the reset-button
+  signal press_counter : unsigned(27 downto 0) := (others => '0'); -- 27-bit @ 10ns = 1.34s
+
+  -- our two reset signals are ACTIVE-HIGH
+  signal reset_short_press : std_logic := '1'; -- initially asserted
+  signal reset_long_press  : std_logic := '1'; -- initially asserted
 
   -- MMCM signals
   signal clkfbout_int     : std_logic;
@@ -46,122 +51,85 @@ architecture Behavioral of clkgen is
   signal clkout0_intB     : std_logic;
   signal clkout1_intA     : std_logic;
   signal clkout1_intB     : std_logic;
-  -- unused MMCM signals
---  signal clkout0b_unused  : std_logic;
---  signal clkout1b_unused  : std_logic;
---  signal clkout2_unused   : std_logic;
---  signal clkout2b_unused  : std_logic;
---  signal clkout3_unused   : std_logic;
---  signal clkout3b_unused  : std_logic;
---  signal clkout4_unused   : std_logic;
---  signal clkout5_unused   : std_logic;
---  signal clkout6_unused   : std_logic;
   
   signal locked_int   : std_logic;
-  signal locked_meta1 : std_logic;
-  signal locked_meta0 : std_logic;
+--  signal locked_meta1 : std_logic;
+--  signal locked_meta0 : std_logic;
 
 begin
 
   -- metastability logic for the external reset input
   -- continously samples without a reset
+  -- also includes a 3rd register for edge-detection
   --
   process(clk_in) is
   begin
     if rising_edge(clk_in) then
-      resetextin_meta1 <= reset_ext_in; -- the "CPU_Reset"-button
-      resetextin_meta0 <= resetextin_meta1;
+      resetextin_meta2 <= reset_ext_in; -- the "CPU_Reset"-button
+      resetextin_meta1 <= resetextin_meta2;
+      resetextin_meta0 <= resetextin_meta1; -- for edge detection
     end if;
   end process;
-  
-  -- debounce logic for the meta-stable reset signal:
-  --
-  -- an up-counter, forever loops, never resets
-  process(clk_in) is
-  begin
-    if rising_edge(clk_in) then
-      bounce_counter <= bounce_counter + 1;
-    end if;
-  end process;
-  -- sample the bouncing input whenever the bounce_counter is '1'
-  -- implements a shift-register, so no reset logic
-  process(clk_in) is
-  begin
-    if rising_edge(clk_in) then
-      if bounce_counter = (bounce_counter'HIGH) then
-        -- sample bouncing reset input signal (POST METASTABLE)
-        reset_sample(15) <= resetextin_meta0; -- normally high, active low
-        reset_sample(14) <= reset_sample(15);
-        reset_sample(13) <= reset_sample(14);
-        reset_sample(12) <= reset_sample(13);
-        reset_sample(11) <= reset_sample(12);
-        reset_sample(10) <= reset_sample(11);
-        reset_sample(9) <= reset_sample(10);
-        reset_sample(8) <= reset_sample(9);
-        reset_sample(7) <= reset_sample(8);
---        reset_sample(7) <= resetextin_meta0; -- normally high, active low
-        reset_sample(6) <= reset_sample(7);
-        reset_sample(5) <= reset_sample(6);
-        reset_sample(4) <= reset_sample(5);
-        reset_sample(3) <= reset_sample(4);
-        reset_sample(2) <= reset_sample(3);
-        reset_sample(1) <= reset_sample(2);
-        reset_sample(0) <= reset_sample(1);
-      end if;
-    end if;
-  end process;
-  --
+
   -- two 'reset' signals are implemented:
   --  * a short-press implements a warm-reset, and
-  --  * a long--press implements a major-reset.
+  --  * a long--press implements a system-reset.
   --
   -- lets make active-high reset signals (opposed to the active-low CPU_Reset button input)
   -- we will generate a signal which is normally LOW,
-  -- but becomes HIGH after the CPU_Reset button is pressed  for some period of time,
-  -- and becomes LOW  after the CPU_Reset button is released for some period of time.
-  process(clk_in, reset_sample, reset_short_press) is
+  -- for the short-press:
+  --   it  becomes HIGH after the CPU_Reset button is pressed  for some period of time (after debouncing),
+  --   and becomes LOW  after the CPU_Reset button is released for some period of time (after debouncing).
+  -- for the long-press:
+  --   it  becomes HIGH if the CPU_Reset button is held for some period of time (about 1 sec),
+  --   and becomes LOW  at the same time as the short-press-release
+  
+  -- debounce logic for the meta-stable reset signal:
+  --
+  process(clk_in) is   
   begin
     if rising_edge(clk_in) then
-      if reset_short_press = '0' then        -- normally LOW
-        if reset_sample(15 downto 14) = "00" then   -- button pressed, signal stable
-          reset_short_press <= '1';          -- internal circuit becomes active-high-RESET
-        else
-          reset_short_press <= reset_short_press;
-        end if;
+      if (resetextin_meta0 /= resetextin_meta1) then -- edge detection
+        -- edge detected (button has toggled), so reset counter
+        bounce_counter <= (others => '0');
       else
-      -- reset_short_press = '1'             -- internal circuit is in active-high-RESET
-        if reset_sample(15 downto 14) = "11" then   -- wait for button released, signal stable
-          reset_short_press <= '0';          -- then synchronously release the active-high reset-signal
+        -- not an edge, so reset-signal is temporarily stable
+        if (bounce_counter = "11111111") then
+          -- external-reset-input has been stable during count-up, so accept new value
+          -- here we invert the polarity of EXTernal reset being active-LOW
+          --   to reset_short_press being ACTIVE-HIGH
+          reset_short_press <= not resetextin_meta0;
         else
-          reset_short_press <= reset_short_press;
-        end if;
-      end if;
-    end if;
-  end process;
-  -- similar to the above
-  process(clk_in, reset_sample, reset_long_press) is
-  begin
-    if rising_edge(clk_in) then
-      if reset_long_press = '0' then        -- normally LOW
-        if reset_sample = "0000000000000000" then   -- button pressed, signal stable
-          reset_long_press <= '1';          -- internal circuit becomes active-high-RESET
-        else
-          reset_long_press <= reset_long_press;
-        end if;
-      else
-      -- reset_long_press = '1'             -- internal circuit is in active-high-RESET
-        if reset_sample = "1111111111111111" then   -- wait for button released, signal stable
-          reset_long_press <= '0';          -- then synchronously release the active-high reset-signal
-        else
-          reset_long_press <= reset_long_press;
+          -- wait until reset-input is stable for the count-up
+          bounce_counter <= bounce_counter + 1;
         end if;
       end if;
     end if;
   end process;
 
+  -- detect the long-press
+  process(clk_in, reset_short_press) is
+  begin
+    if rising_edge(clk_in) then
+      if (reset_short_press = '0') then -- ie reset NOT asserted
+        reset_long_press <= '0';
+        press_counter <= (others => '0');
+      else
+        -- reset_short_press is asserted
+        if (press_counter = "111111111111111111111111111") then --press_counter'HIGH) then
+          reset_long_press <= '1'; -- ACTIVE-HIGH-reset
+        else
+          reset_long_press <= '0';
+          press_counter <= press_counter + 1;
+        end if;
+      end if;
+    end if;
+  end process;
+
+
   -- insert a MMCM to:
   -- - create a stable output clock at 100mhz
-  -- - create a stable output clock at 193.18387.5mhz
+  -- - create a stable output clock at 148mhz
   mmcm_adv_inst: MMCME2_ADV
     generic map(
       BANDWIDTH            => "OPTIMIZED",
@@ -169,16 +137,16 @@ begin
       COMPENSATION         => "INTERNAL",
       STARTUP_WAIT         => FALSE,
       DIVCLK_DIVIDE        => 1,
-      CLKFBOUT_MULT_F      => 10.375,--11.625, -- is input multiplier
+      CLKFBOUT_MULT_F      => 10.375, -- is common input multiplier
       CLKFBOUT_PHASE       => 0.0,
       CLKFBOUT_USE_FINE_PS => FALSE,
 
-      CLKOUT0_DIVIDE_F     => 10.375,--11.625, -- is output divisor
+      CLKOUT0_DIVIDE_F     => 10.375, -- is CLK0 output divisor
       CLKOUT0_PHASE        => 0.0,
       CLKOUT0_DUTY_CYCLE   => 0.5,
       CLKOUT0_USE_FINE_PS  => FALSE,
 
-      CLKOUT1_DIVIDE       => 7,--3,    -- is output divisor
+      CLKOUT1_DIVIDE       => 7, -- is CLK1 output divisor
       CLKOUT1_PHASE        => 0.0,
       CLKOUT1_DUTY_CYCLE   => 0.5,
       CLKOUT1_USE_FINE_PS  => FALSE,
@@ -205,7 +173,7 @@ begin
       CLKFBIN             => clkfbout_int,
       CLKIN1              => clk_in,
       CLKIN2              => clk_in,
-      -- Tied to always select the primary input clock
+      -- Tied to always select the CLKIN1 input clock
       CLKINSEL            => '1',
       -- Ports for dynamic reconfiguration
       DADDR               => (others => '0'),
@@ -247,7 +215,7 @@ begin
 
   locked_out <= locked_int;
   
-  dbg_rstA <= reset_short_press;
-  dbg_rstB <= reset_long_press;
+  reset_out_A <= reset_short_press;
+  reset_out_B <= reset_long_press;
   
 end Behavioral;

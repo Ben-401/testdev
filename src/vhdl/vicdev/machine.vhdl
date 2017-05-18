@@ -54,9 +54,10 @@ use Std.TextIO.all;
 entity machine is
   Port (
     sysclk : std_logic;
-	 reset2 : std_logic;
-	 pixelclock_en : std_logic;
-	 cpuioclock_en : std_logic;
+    reset_S : std_logic;
+    reset_L : std_logic;
+    pixelclock_en : std_logic;
+    cpuioclock_en : std_logic;
 
 --         pixelclock : STD_LOGIC;
 --         pixelclock2x : STD_LOGIC;
@@ -190,9 +191,10 @@ architecture Behavioral of machine is
   component bensvic2 is
     Port (
     sysclk        : in std_logic;
-	 reset2        : in std_logic;
-	 pixelclock_en : in std_logic;
-	 cpuioclock_en : in std_logic;
+    reset_S       : in std_logic;
+    reset_L       : in std_logic;
+    pixelclock_en : in std_logic;
+    cpuioclock_en : in std_logic;
     ----------------------------------------------------------------------
     -- VGA output
     ----------------------------------------------------------------------
@@ -444,7 +446,7 @@ begin
 			 io_nmi,
 			 sw,
 			 reset_out,
-			 reset2,
+			 reset_S, reset_L,
           power_on_reset,
 			 reset_monitor,
 			 hyper_trap,
@@ -455,7 +457,7 @@ begin
     combinedirq <= (irq and io_irq and vic_irq)     or sw(0);
     combinednmi <= (nmi and io_nmi and restore_nmi) or sw(14);
 	 
-	 reset_combined <= reset2;
+	 reset_combined <= reset_S;
 	 
 --    if reset2='0' then
 --      report "reset asserted via btnCpuReset";
@@ -605,7 +607,7 @@ begin
 -- ######## ########
 -- ######## ########
   
-  process(sysclk, reset2) --pixelclock,ioclock)
+  process(sysclk, reset_S) --pixelclock,ioclock)
     variable digit : std_logic_vector(3 downto 0);
   begin
   
@@ -696,7 +698,8 @@ begin
   viciv0: bensvic2
     port map (
 	   sysclk => sysclk,
-		reset2 => reset_combined,
+		reset_S => reset_S,
+		reset_L => reset_L,
 		pixelclock_en => pixelclock_en,
 		cpuioclock_en => cpuioclock_en,
       vsync           => vsync,
