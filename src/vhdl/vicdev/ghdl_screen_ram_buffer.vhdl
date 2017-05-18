@@ -39,8 +39,7 @@ begin
 BEGIN
   doutb <= ram(to_integer(unsigned(addrb)));
 
-  if(rising_edge(Clka)) then
-  if (Clka_en = '1') then
+  if(rising_edge(Clka) and Clka_en='1') then
   
     if(wea(0)='1') then
       ram(to_integer(unsigned(addra))) <= dina;
@@ -48,7 +47,7 @@ BEGIN
         & " to " & integer'image(to_integer(unsigned(addra)))
         severity note;
     end if;
-  end if;
+
   end if;
 END PROCESS;
 

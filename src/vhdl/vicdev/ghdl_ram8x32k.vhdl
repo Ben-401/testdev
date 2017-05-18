@@ -48,8 +48,7 @@ begin  -- behavioural
     --report "COLOURRAM: A Reading from $" & to_hstring(unsigned(addra))
     --  & " = $" & to_hstring(ram(to_integer(unsigned(addra))));
     
-    if(rising_edge(Clka)) then 
-    if (Clka_en = '1') then
+    if(rising_edge(Clka) and Clka_en='1') then
     
       if ena='1' then
         if(wea="1") then
@@ -61,18 +60,15 @@ begin  -- behavioural
       end if;
       
     end if;
-    end if;
   end process;
 
   process (clkb,addrb,ram,
            clkb_en)
   begin
-    if(rising_edge(Clkb)) then 
-    if (Clkb_en = '1') then
+    if(rising_edge(Clkb) and Clkb_en='1') then
     
         doutb <= ram(to_integer(unsigned(addrb(14 downto 0))));
 	
-    end if;
     end if;
   end process;
 

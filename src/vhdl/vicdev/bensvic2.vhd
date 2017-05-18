@@ -115,6 +115,10 @@ architecture Behavioral of bensvic2 is
   signal vgar_int : unsigned(3 downto 0);
   signal vgag_int : unsigned(3 downto 0);
   signal vgab_int : unsigned(3 downto 0);
+
+  signal static_pipeline : std_logic_vector(31 downto 0) := (others => '1');
+  signal static_feedback : std_logic;
+  signal static_greytone : unsigned(3 downto 0);
   
   
 begin
@@ -203,6 +207,8 @@ begin
     end if;
   end process;
 
+  static_feedback <= static_pipeline(31) xor static_pipeline(21) xor static_pipeline(1) xor static_pipeline(0);
+
   process (reset_S, reset_L, sysclk, pixelclock_en)
   begin
     if (reset_L = '1') then
@@ -222,11 +228,14 @@ begin
       else
         outtype0 <= "00";
       end if;
+      
+      static_pipeline <= static_pipeline(30 downto 0) & static_feedback;
+--      static_greytone <= static_pipeline(0) & static_pipeline(1) & static_pipeline(2) & static_pipeline(3);
 
       if (reset_S = '1') then
-        vgar_int   <= hc0us(6 downto 3);--to_unsigned(hc1v,4);         --set horiztonal pixel coordinate
-        vgag_int <= vc0us(6 downto 3);--to_unsigned(vc1v,4);         --set horiztonal pixel coordinate
-        vgab_int  <= hc0us(7 downto 4);--to_unsigned(vc1v,4);         --set horiztonal pixel coordinate
+        vgar_int   <= static_pipeline(0) & static_pipeline(1) & static_pipeline(2) & static_pipeline(3);
+        vgag_int   <= static_pipeline(0) & static_pipeline(1) & static_pipeline(2) & static_pipeline(3);
+        vgab_int   <= static_pipeline(0) & static_pipeline(1) & static_pipeline(2) & static_pipeline(3);
       else
         vgab_int   <= hc0us(6 downto 3);--to_unsigned(hc1v,4);         --set horiztonal pixel coordinate
         vgar_int <= vc0us(6 downto 3);--to_unsigned(vc1v,4);         --set horiztonal pixel coordinate

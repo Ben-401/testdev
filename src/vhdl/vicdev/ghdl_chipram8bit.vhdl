@@ -72,14 +72,11 @@ begin
   -- move this to its own process
   --doutb <= ram(to_integer(unsigned(addrb)));
 
-  if(rising_edge(Clka)) then 
-  if (clka_en = '1') then
-    
+  if(rising_edge(Clka) and clka_en='1') then
     if(wea(0)='1') then
       ram(to_integer(unsigned(addra))) <= dina;
     end if;
     
-  end if;
   end if;
 END PROCESS;
 

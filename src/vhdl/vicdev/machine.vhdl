@@ -52,22 +52,25 @@ use Std.TextIO.all;
 --use UNISIM.VComponents.all;
 
 entity machine is
-  Port (
+  Port ( 
     sysclk : std_logic;
     reset_S : std_logic;
     reset_L : std_logic;
     pixelclock_en : std_logic;
     cpuioclock_en : std_logic;
-
---         pixelclock : STD_LOGIC;
---         pixelclock2x : STD_LOGIC;
---         cpuclock : std_logic;
-----         clock50mhz : in std_logic;
---         ioclock : std_logic;
---         uartclock : std_logic;
+         --pixelclock : STD_LOGIC;
+         --pixelclock2x : STD_LOGIC;
+         --cpuclock : std_logic;
+         --clock50mhz : in std_logic;
+         --ioclock : std_logic;
+         --uartclock : std_logic;
+         --btnCpuReset : in  STD_LOGIC;
 			
---         btnCpuReset : in  STD_LOGIC;
-			
+ 
+	 
+--	 ethclk      : in std_logic;
+--	 ethclock_en : in std_logic;
+	 
          irq : in  STD_LOGIC;
         nmi : in  STD_LOGIC;
 
@@ -79,6 +82,7 @@ entity machine is
          ----------------------------------------------------------------------
          -- VGA output
          ----------------------------------------------------------------------
+-- machine
          vsync : out  STD_LOGIC;
          hsync : out  STD_LOGIC;
          vgared : out  UNSIGNED (3 downto 0);
@@ -88,6 +92,7 @@ entity machine is
          -------------------------------------------------------------------------
          -- Lines for the SDcard interface itself
          -------------------------------------------------------------------------
+-- machine
 --         cs_bo : out std_logic;
 --         sclk_o : out std_logic;
 --         mosi_o : out std_logic;
@@ -96,6 +101,7 @@ entity machine is
 --         ---------------------------------------------------------------------------
 --         -- Lines for other devices that we handle here
 --         ---------------------------------------------------------------------------
+-- machine
 --         aclMISO : in std_logic;
 --         aclMOSI : out std_logic;
 --         aclSS : out std_logic;
@@ -118,6 +124,7 @@ entity machine is
 --         ---------------------------------------------------------------------------
 --         -- IO lines to the ethernet controller
 --         ---------------------------------------------------------------------------
+-- machine
 --         eth_mdio : inout std_logic;
 --         eth_mdc : out std_logic;
 --         eth_reset : out std_logic;
@@ -128,9 +135,11 @@ entity machine is
 --         eth_rxer : in std_logic;
 --         eth_interrupt : in std_logic;
 --         
+-- BG removed because does not provide core functionality
 --         ----------------------------------------------------------------------
 --         -- Flash RAM for holding config
 --         ----------------------------------------------------------------------
+-- machine
 --         QspiSCK : out std_logic;
 --         QspiDB : inout std_logic_vector(3 downto 0);
 --         QspiCSn : out std_logic;
@@ -140,6 +149,7 @@ entity machine is
 --         ---------------------------------------------------------------------------
 --         -- Interface to Slow RAM (128MB DDR2 RAM chip)
 --         ---------------------------------------------------------------------------
+-- machine
 --         slowram_addr_reflect : in std_logic_vector(26 downto 0);
 --         slowram_datain_reflect : in std_logic_vector(7 downto 0);
 --         slowram_addr : out std_logic_vector(26 downto 0);
@@ -156,6 +166,7 @@ entity machine is
 --         -- PS/2 adapted USB keyboard & joystick connector.
 --         -- (For using a keyrah adapter to connect to the keyboard.)
 --         ----------------------------------------------------------------------
+-- machine
 --         ps2data : in std_logic;
 --         ps2clock : in std_logic;
 --
@@ -171,9 +182,11 @@ entity machine is
 --         uart_rx : in std_logic;
 --         uart_tx : out std_logic;
 --    
+-- BG removed this because it seems not required for core functioality
 --         ----------------------------------------------------------------------
 --         -- Debug interfaces on Nexys4 board
 --         ----------------------------------------------------------------------
+-- machine
          led : out std_logic_vector(15 downto 0);
          sw : in std_logic_vector(15 downto 0);
 --         btn : in std_logic_vector(4 downto 0);
@@ -181,7 +194,13 @@ entity machine is
 --         UART_TXD : out std_logic;
 --         RsRx : in std_logic;
 --         
+
+        -- 7seg 8x displays, each are 7-seg
+        -- all cathodes of each display are connected to a common data bus
+        -- active low
          sseg_ca : out std_logic_vector(7 downto 0);
+        -- one anode per display (each display has common anode to all segments)
+        -- active high
          sseg_an : out std_logic_vector(7 downto 0)
          );
 end machine;
@@ -409,7 +428,8 @@ architecture Behavioral of machine is
   signal cpuis6502 : std_logic;
   signal cpuspeed : unsigned(7 downto 0);
 
-  
+  -- NEXYS use only
+  -- counter for multiplexing to the 7seg displays
   signal segled_counter : unsigned(17 downto 0) := (others => '0');
 
   -- Clock running as close as possible to 17.734475 MHz / 18 = 985248Hz
@@ -457,7 +477,7 @@ begin
     combinedirq <= (irq and io_irq and vic_irq)     or sw(0);
     combinednmi <= (nmi and io_nmi and restore_nmi) or sw(14);
 	 
-	 reset_combined <= reset_S;
+--	 reset_combined <= reset_S;
 	 
 --    if reset2='0' then
 --      report "reset asserted via btnCpuReset";
@@ -481,7 +501,7 @@ begin
     -- report "reset_combined = " & std_logic'image(reset_combined) severity note;
   end process;
 
-  hyper_trap				<= sw(0);
+  hyper_trap			<= sw(0);
   monitor_hyper_trap		<= sw(0);
   colour_ram_cs			<= sw(0);
   charrom_write_cs		<= sw(0);
@@ -606,48 +626,95 @@ begin
 
 -- ######## ########
 -- ######## ########
-  
-  process(sysclk, reset_S) --pixelclock,ioclock)
-    variable digit : std_logic_vector(3 downto 0);
+
+  -- circuit to multiplex to the 7-seg displays
+  -- only used on the NEXYS board
+  --
+  -- counter, forever loops
+  process(sysclk, cpuioclock_en) is --pixelclock,ioclock)
   begin
-  
-    if rising_edge(sysclk) then --ioclock) then
+    if (rising_edge(sysclk) and cpuioclock_en='1') then --ioclock) then
+    
 --      -- Hold reset low for a while when we first turn on
 ----      report "power_on_reset(0) = " & std_logic'image(power_on_reset(0)) severity note;
 --      power_on_reset(7) <= '1';
 --      power_on_reset(6 downto 0) <= power_on_reset(7 downto 1);
 
       segled_counter <= segled_counter + 1;
+    end if;
+  end process;
+  --
+  process(sysclk, cpuioclock_en) is
+    variable digit : std_logic_vector(3 downto 0);
+  begin
+    if (rising_edge(sysclk) and cpuioclock_en='1') then --ioclock) then
 
-      sseg_an <= (others => '1');
-      sseg_an(to_integer(segled_counter(17 downto 15))) <= '0';
-
-      if segled_counter(17 downto 15)=0 then
-        digit := std_logic_vector(seg_led_data(3 downto 0));
-      elsif segled_counter(17 downto 15)=1 then
-        digit := std_logic_vector(seg_led_data(7 downto 4));
-      elsif segled_counter(17 downto 15)=2 then
-        digit := std_logic_vector(seg_led_data(11 downto 8));
-      elsif segled_counter(17 downto 15)=3 then
-        digit := std_logic_vector(seg_led_data(15 downto 12));
-      elsif segled_counter(17 downto 15)=4 then
-        --digit := std_logic_vector(seg_led_data(19 downto 16));
-        digit := (others => '0');
-      elsif segled_counter(17 downto 15)=5 then
-        --digit := std_logic_vector(seg_led_data(23 downto 20));
-        digit := (others => '0');
-      elsif segled_counter(17 downto 15)=6 then
-        digit := std_logic_vector(seg_led_data(27 downto 24));
-      elsif segled_counter(17 downto 15)=7 then
-        digit := std_logic_vector(seg_led_data(31 downto 28));
-      end if;
-      
       if cpuis6502 = '1' then
         seg_led_data(15 downto 0) <= x"6510";
+      elsif ( sw(15) & sw(14) & sw(13) & sw(12) = (segled_counter(17 downto 14)) ) then
+        seg_led_data(15 downto 0) <= segled_counter(15 downto 0);
       else
         seg_led_data(15 downto 0) <= x"4502";
       end if;
-      seg_led_data(31 downto 24) <= cpuspeed;
+
+      if ( sw(1) & sw(2) & sw(3) = (segled_counter(17 downto 15)) ) then
+        seg_led_data(31 downto 24) <= segled_counter(14 downto 7);
+        seg_led_data(23 downto 16) <= segled_counter(15 downto 8);
+      else
+        seg_led_data(31 downto 24) <= cpuspeed;
+        seg_led_data(23 downto 16) <= cpuspeed(3 downto 0) & cpuspeed(7 downto 4);  
+      end if;        
+
+      -- based on counter value, select just one of the common-annode displays
+      case segled_counter(17 downto 15) is
+        when "000" => sseg_an <= "11111110";
+        when "001" => sseg_an <= "11111101";
+        when "010" => sseg_an <= "11111011";
+        when "011" => sseg_an <= "11110111";
+        when "100" => sseg_an <= "11101111";
+        when "101" => sseg_an <= "11011111";
+        when "110" => sseg_an <= "10111111";
+        when "111" => sseg_an <= "01111111";
+        when others => null;
+      end case;
+          
+--    sseg_an <= (others => '1');
+--    sseg_an(to_integer(segled_counter(17 downto 15))) <= '0';
+    
+--      -- based on counter value, select the corresponding data-segment to output
+--      if segled_counter(17 downto 15)=0 then
+--        digit := std_logic_vector(seg_led_data(3 downto 0));
+--      elsif segled_counter(17 downto 15)=1 then
+--        digit := std_logic_vector(seg_led_data(7 downto 4));
+--      elsif segled_counter(17 downto 15)=2 then
+--        digit := std_logic_vector(seg_led_data(11 downto 8));
+--    elsif segled_counter(17 downto 15)=3 then
+--      digit := std_logic_vector(seg_led_data(15 downto 12));
+--    elsif segled_counter(17 downto 15)=4 then
+--      --digit := std_logic_vector(seg_led_data(19 downto 16));
+--        digit := (others => '0');
+--    elsif segled_counter(17 downto 15)=5 then
+--      --digit := std_logic_vector(seg_led_data(23 downto 20));
+--      digit := (others => '0');
+--    elsif segled_counter(17 downto 15)=6 then
+--      digit := std_logic_vector(seg_led_data(27 downto 24));
+--    elsif segled_counter(17 downto 15)=7 then
+--      digit := std_logic_vector(seg_led_data(31 downto 28));
+--    end if;
+
+     case segled_counter(17 downto 15) is
+        when "000" => digit := std_logic_vector(seg_led_data( 3 downto  0));
+        when "001" => digit := std_logic_vector(seg_led_data( 7 downto  4));
+        when "010" => digit := std_logic_vector(seg_led_data(11 downto  8));
+        when "011" => digit := std_logic_vector(seg_led_data(15 downto 12));
+        when "100" => digit := std_logic_vector(seg_led_data(19 downto 16));
+        when "101" => digit := std_logic_vector(seg_led_data(23 downto 20));
+        when "110" => digit := std_logic_vector(seg_led_data(27 downto 24));
+        when "111" => digit := std_logic_vector(seg_led_data(31 downto 28));
+        when others => null;
+      end case;
+    
+      
       
       -- segments are:
       -- 7 - decimal point
@@ -659,7 +726,7 @@ begin
       -- 1 - upper right
       -- 0 - top
       case digit is
-        when x"0" => sseg_ca   <= "11000000";
+        when x"0" => sseg_ca   <= "01000000"; -- MSB should be '1' as it is the dot
         when x"1" => sseg_ca   <= "11111001";
         when x"2" => sseg_ca   <= "10100100";
         when x"3" => sseg_ca   <= "10110000";
@@ -675,7 +742,7 @@ begin
         when x"D" => sseg_ca   <= "10100001";
         when x"E" => sseg_ca   <= "10000110";
         when x"F" => sseg_ca   <= "10001110";
-        when others => sseg_ca <= "10100001";
+        when others => sseg_ca <= "01111111";
       end case; 
       
 
@@ -707,6 +774,12 @@ begin
       vgared          => vgared,
       vgagreen        => vgagreen,
       vgablue         => vgablue 
+--      pixel_stream_out => open,--pixel_stream,
+--      pixel_y => open,--pixel_y,
+--      pixel_valid => open,--pixel_valid,
+--      pixel_newframe => open,--pixel_newframe,
+--      pixel_newraster => open,--pixel_newraster,
+-- BG removed because does not provide core functionality ethernet/framepacker
       );
 
 --  viciv0: viciv
@@ -719,6 +792,9 @@ begin
 ----      pixelclock      => pixelclock,
 ----      pixelclock2x      => pixelclock2x,
 ----      cpuclock        => cpuclock,
+--    clock50mhz => clock50mhz,
+--    ethclk      => ethclk,
+--    ethclock_en => ethclock_en,
 ----      ioclock        => ioclock,
 --
 --      irq             => vic_irq,

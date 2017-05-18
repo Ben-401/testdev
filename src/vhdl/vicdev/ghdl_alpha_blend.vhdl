@@ -61,8 +61,7 @@ begin
   process (clk1x) is
     variable temp : unsigned(19 downto 0);
   begin
-    if rising_edge(clk1x) then
-    if (clk1x_en = '1') then
+    if rising_edge(clk1x) and clk1x_en='1' then
 
       r_strm0_drive <= r_strm0;
       r_strm1_drive <= r_strm1;
@@ -96,8 +95,6 @@ begin
       b1drive <= b1;
       temp := to_unsigned(b0drive+b1drive,20);
       b_blnd <= std_logic_vector(temp(19 downto 10));
-		
-      end if;
     end if;
   end process;
 end behavioural;

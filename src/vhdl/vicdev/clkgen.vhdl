@@ -39,7 +39,8 @@ architecture Behavioral of clkgen is
   signal bounce_counter  : unsigned(7 downto 0) := (others => '0'); -- 8-bit @ 10ns = 2.56us
 
   -- counter to detect a long-press of the reset-button
-  signal press_counter : unsigned(27 downto 0) := (others => '0'); -- 27-bit @ 10ns = 1.34s
+  -- includes one extra bit
+  signal press_counter : unsigned(28 downto 0) := (others => '0'); -- 27-bit @ 10ns = 1.34s
 
   -- our two reset signals are ACTIVE-HIGH
   signal reset_short_press : std_logic := '1'; -- initially asserted
@@ -116,7 +117,8 @@ begin
         press_counter <= (others => '0');
       else
         -- reset_short_press is asserted
-        if (press_counter = "111111111111111111111111111") then --press_counter'HIGH) then
+--        if (press_counter = "111111111111111111111111111") then --press_counter'HIGH) then
+        if (press_counter(press_counter'HIGH) = '1') then
           reset_long_press <= '1'; -- ACTIVE-HIGH-reset
         else
           reset_long_press <= '0';

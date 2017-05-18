@@ -95,60 +95,18 @@ architecture Behavioral of container is
       clk0_out : out std_logic;
       clk1_out : out std_logic;
       locked_out : out std_logic;
-	 reset_out_A : out std_logic; -- short-press
-	 reset_out_B : out std_logic  -- long-press
+      reset_out_A : out std_logic; -- short-press
+      reset_out_B : out std_logic  -- long-press
     );
   end component;
 
--- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
 
  
---  signal pixelclock : std_logic;
---  signal pixelclock2x : std_logic;
---  signal cpuclock : std_logic;
+
+
+
   
-  signal sw_int :    std_logic_vector(15 downto 0);
---  signal led_int :    std_logic_vector(15 downto 0);
 
-  -- buffered external OSC 100mhz
-  signal clk100buf : std_logic;
-
-  -- toplevel reset signals (clk100buf domain)
-  signal reset_int_A : std_logic;
-  signal reset_int_B : std_logic;
-  signal mrst_s_common : std_logic;
-  signal mrst_l_common : std_logic;
-
-  -- reset synchroniser (for clk1 domain)
-  signal CLK1mrst_s : std_logic_vector(1 downto 0);
-  signal CLK1mrst_l : std_logic_vector(1 downto 0);
-  signal CLK1mrst_s_out : std_logic;
-  signal CLK1mrst_l_out : std_logic;
-
-
-  -- internal locked signal from MMCM
-  signal locked_int : std_logic;
-
-  -- buffered internal CLK from MMCM-CLK1
-  signal CLK1int : std_logic; -- primary clock is 148.214mhz
-  signal CLK1divcnt : unsigned(1 downto 0); -- counter for clock-divisor(s)
-  signal CLK1div3_en : std_logic;
-
-  -- signals for "CLK1 domain" only
-  -- debounce counter for external signals
-  -- initialise to 4 so that after 4x CLK1's, the inputs are sampled
-  -- this is required as: 2x clocks for meta FFs, plus 2x spares
-  -- also assumes reset is not released until ATLEAST 4x CLK1s after config
-  -- which allows external inputs to be fed into FFs before reset release
-  signal CLK1sample_counter : unsigned(7 downto 0) := "00000100";
-
-  -- switch inputs
-  signal CLK1sw_meta1 : std_logic_vector(15 downto 0);
-  signal CLK1sw_meta0 : std_logic_vector(15 downto 0);
-  signal CLK1sw_sample : std_logic_vector(15 downto 0);
-  
-  -- DEBUG signals
-  signal CLK1dbg_ff1 : std_logic;
 
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
 
@@ -306,6 +264,53 @@ architecture Behavioral of container is
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
 
+  signal sw_int :    std_logic_vector(15 downto 0);
+--  signal led_int :    std_logic_vector(15 downto 0);
+
+  -- buffered external OSC 100mhz
+  signal clk100buf : std_logic;
+
+
+
+
+  -- toplevel reset signals (clk100buf domain)
+  signal reset_int_A : std_logic;
+  signal reset_int_B : std_logic;
+  signal mrst_s_common_async : std_logic;
+  signal mrst_l_common_async : std_logic;
+
+
+  -- reset synchroniser (for clk1 domain)
+  signal CLK1mrst_s : std_logic_vector(1 downto 0);
+  signal CLK1mrst_l : std_logic_vector(1 downto 0);
+  signal CLK1mrst_s_out : std_logic;
+  signal CLK1mrst_l_out : std_logic;
+
+
+  -- internal locked signal from MMCM
+  signal locked_int : std_logic;
+
+  -- buffered internal CLK from MMCM-CLK1
+  signal CLK1int : std_logic; -- primary clock is 148.214mhz
+  signal CLK1divcnt : unsigned(1 downto 0); -- counter for clock-divisor(s)
+  signal CLK1div3_en : std_logic;
+
+  -- signals for "CLK1 domain" only
+  -- debounce counter for external signals
+  -- initialise to 4 so that after 4x CLK1's, the inputs are sampled
+  -- this is required as: 2x clocks for meta FFs, plus 2x spares
+  -- also assumes reset is not released until ATLEAST 4x CLK1s after config
+  -- which allows external inputs to be fed into FFs before reset release
+  signal CLK1sample_counter : unsigned(7 downto 0) := "00000100";
+
+  -- switch inputs
+  signal CLK1sw_meta1 : std_logic_vector(15 downto 0);
+  signal CLK1sw_meta0 : std_logic_vector(15 downto 0);
+  signal CLK1sw_sample : std_logic_vector(15 downto 0);
+  
+  -- DEBUG signals
+  signal CLK1dbg_ff1 : std_logic;
+
 begin
 
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
@@ -331,8 +336,8 @@ begin
   
   -- combine the three reset sources
   -- all are ACTIVE-HIGH and should be considered as asynchronous
-  mrst_s_common <= (not locked_int) or reset_int_A or reset_int_B;
-  mrst_l_common <= (not locked_int) or reset_int_B;
+  mrst_s_common_async <= (not locked_int) or reset_int_A or reset_int_B;
+  mrst_l_common_async <= (not locked_int) or reset_int_B;
 
   -- ######
   -- ## CLK1 domain
@@ -342,12 +347,12 @@ begin
   -- using async assert, and sync deassert
   --
   -- short-press
-  process(CLK1int, mrst_s_common) is
+  process(CLK1int, mrst_s_common_async) is
   begin
-    if (mrst_s_common = '1') then
+    if (mrst_s_common_async = '1') then
       CLK1mrst_s <= (others => '1'); -- assert reset
     else
-      if rising_edge(clk1int) then
+      if rising_edge(CLK1int) then
         CLK1mrst_s(1) <= '0'; -- deassert
         CLK1mrst_s(0) <= CLK1mrst_s(1);
       end if;
@@ -355,9 +360,9 @@ begin
   end process;
   --
   -- long-press
-  process(CLK1int, mrst_l_common) is
+  process(CLK1int, mrst_l_common_async) is
   begin
-    if (mrst_l_common = '1') then
+    if (mrst_l_common_async = '1') then
       CLK1mrst_l <= (others => '1'); -- assert reset
     else
       if rising_edge(CLK1int) then
@@ -459,6 +464,7 @@ begin
   ja9_out <= CLK1mrst_l_out;
   jaa_out <= CLK1dbg_ff1;
   
+  
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
   
   machine0: machine
@@ -493,6 +499,7 @@ begin
       vgagreen        => vgagreen,
       vgablue         => vgablue,
 
+-- machine
       ---------------------------------------------------------------------------
       -- IO lines to the ethernet controller
       ---------------------------------------------------------------------------
@@ -545,6 +552,7 @@ begin
 --      pmod_data_in(1 downto 0) => jblo(4 downto 3),
 --      pmod_data_in(3 downto 2) => jbhi(8 downto 7),
 --      pmod_data_out => jbhi(10 downto 9),
+--
 --      pmoda(3 downto 0) => jalo(4 downto 1),
 --      pmoda(7 downto 4) => jahi(10 downto 7),
 --

@@ -5,12 +5,11 @@
 
 ## Clock signal
 NET "clk_in"   LOC = "E3"	| IOSTANDARD = "LVCMOS33";					#Bank = 35, Pin name = #IO_L12P_T1_MRCC_35,					Sch name = clk100mhz
-NET "clk_in" TNM_NET = clk_in;
-TIMESPEC TS_clk_in = PERIOD clk_in 100 MHz HIGH 50%; 
+## Clock signal (Timing Constraints)
+NET "clk_in" TNM_NET = ext_clk_pin;
+TIMESPEC TS_ext_clk_pin = PERIOD ext_clk_pin 100 MHz HIGH 50%; 
 
-#TIMESPEC TS_clkgen0_clkout1_intA = PERIOD TIMEGRP "clkgen0_clkout1_intA" TS_clk_in * 1.48214286 HIGH 50%; 
-
-TIMESPEC TS_02 = FROM "clk_in" TO "clkgen0_clkout1_intA" TIG;
+NET "*_async" TIG;
 
 
 ## Switches
@@ -89,7 +88,7 @@ NET "sseg_an<5>"          LOC=T14 | IOSTANDARD=LVCMOS33; #IO_L14P_T2_SRCC_14
 NET "sseg_an<6>"          LOC=K2 | IOSTANDARD=LVCMOS33; #IO_L23P_T3_35
 NET "sseg_an<7>"          LOC=U13 | IOSTANDARD=LVCMOS33; #IO_L23N_T3_A02_D18_14
 
-#VGA Connector
+##VGA Connector
 NET "vgaRed<0>"       LOC=A3 | IOSTANDARD=LVCMOS33; #IO_L8N_T1_AD14N_35
 NET "vgaRed<1>"       LOC=B4 | IOSTANDARD=LVCMOS33; #IO_L7N_T1_AD6N_35
 NET "vgaRed<2>"       LOC=C5 | IOSTANDARD=LVCMOS33; #IO_L1N_T0_AD4N_35
@@ -156,6 +155,8 @@ NET "vsync"            LOC=B12 | IOSTANDARD=LVCMOS33; #IO_L3N_T0_DQS_AD1N_15
 #NET "eth_reset"      LOC=B3 | IOSTANDARD=LVCMOS33; #IO_L10P_T1_AD15P_35
 #NET "eth_TxEn"       LOC=B9 | IOSTANDARD=LVCMOS33; #IO_L11N_T1_SRCC_16
 #NET "eth_Rxer"       LOC=C10 | IOSTANDARD=LVCMOS33; #IO_L13N_T2_MRCC_16
+#
+# BG removed because does not provide core functionality ethernet/framepacker
 
 ##USB-RS232 Interface
 #NET "uart_cts"       LOC=D3 | IOSTANDARD=LVCMOS33; #IO_L12N_T1_MRCC_35
