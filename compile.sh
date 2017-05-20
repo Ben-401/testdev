@@ -118,12 +118,14 @@ echo "==> $datetime Starting: xst, see container.syr"
 xst ${ISE_COMMON_OPTS} -ifn "container.xst" -ofn "${SCROUTDIR_FULL}/container.syr" >> $outfile1
 #xst ${ISE_COMMON_OPTS} -ifn "${BASEDIR}/isepn147/mega65/working/container.xst" -ofn "${BASEDIR}/build/container.syr" >> $outfile1
 retcode=$?
+echo "Return code = ${retcode}"
 if [ $retcode -ne 0 ] ; then
   echo "xst failed with return code $retcode" &&
   cat $outfile1 | grep ERROR
   exit 1
 else
   cat $outfile1 | grep WARN
+  cat $outfile1 | grep INFO
 fi
 
 #
@@ -133,6 +135,7 @@ datetime=`date +%Y%m%d_%H:%M:%S`
 echo "==> $datetime Starting: ngdbuild, see container.bld"
 ngdbuild ${ISE_COMMON_OPTS} ${ISE_NGDBUILD_OPTS} -uc ../../../src/vhdl/container-n4ddr.ucf container.ngc ${SCROUTDIR_FULL}/container.ngd > $outfile2
 retcode=$?
+echo "Return code = ${retcode}"
 if [ $retcode -ne 0 ] ; then
   echo "ngdbuild failed with return code $retcode" &&
   cat $outfile2 | grep ERROR
@@ -148,6 +151,7 @@ datetime=`date +%Y%m%d_%H:%M:%S`
 echo "==> $datetime Starting: map, see container_map.mrp"
 map ${ISE_COMMON_OPTS} ${ISE_MAP_OPTS} -o ${SCROUTDIR_FULL}/container_map.ncd ${SCROUTDIR_FULL}/container.ngd ${SCROUTDIR_FULL}/container.pcf > $outfile3
 retcode=$?
+echo "Return code = ${retcode}"
 if [ $retcode -ne 0 ] ; then
   echo "map failed with return code $retcode" &&
   cat $outfile3 | grep ERROR
@@ -163,6 +167,7 @@ datetime=`date +%Y%m%d_%H:%M:%S`
 echo "==> $datetime Starting: par, see container.par"
 par ${ISE_COMMON_OPTS} ${ISE_PAR_OPTS} ${SCROUTDIR_FULL}/container_map.ncd ${SCROUTDIR_FULL}/container.ncd ${SCROUTDIR_FULL}/container.pcf > $outfile4
 retcode=$?
+echo "Return code = ${retcode}"
 if [ $retcode -ne 0 ] ; then
   echo "par failed with return code $retcode" &&
   cat $outfile4 | grep ERROR
@@ -178,6 +183,7 @@ datetime=`date +%Y%m%d_%H:%M:%S`
 echo "==> $datetime Starting: trce, see container.twr"
 trce ${ISE_COMMON_OPTS} ${ISE_TRCE_OPTS} ${SCROUTDIR_FULL}/container.twx ${SCROUTDIR_FULL}/container.ncd -o ${SCROUTDIR_FULL}/container.twr ${SCROUTDIR_FULL}/container.pcf -ucf ../../../src/container-n4ddr.ucf > $outfile5
 retcode=$?
+echo "Return code = ${retcode}"
 if [ $retcode -ne 0 ] ; then
   echo "trce failed with return code $retcode" &&
   cat $outfile5 | grep ERROR
@@ -193,6 +199,7 @@ datetime=`date +%Y%m%d_%H:%M:%S`
 echo "==> $datetime Starting: bitgen, see container.bgn"
 bitgen ${ISE_COMMON_OPTS} -f container.ut ${SCROUTDIR_FULL}/container.ncd > $outfile6
 retcode=$?
+echo "Return code = ${retcode}"
 if [ $retcode -ne 0 ] ; then
   echo "bitgen failed with return code $retcode" &&
   cat $outfile6 | grep ERROR

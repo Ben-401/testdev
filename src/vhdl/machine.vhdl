@@ -24,9 +24,6 @@ entity machine is
     pixelclock_en : std_logic;
     cpuioclock_en : std_logic;
 
-    irq : in  STD_LOGIC;
-    nmi : in  STD_LOGIC;
-
     vsync : out  STD_LOGIC;
     hsync : out  STD_LOGIC;
     vgared : out  UNSIGNED (3 downto 0);
@@ -62,17 +59,13 @@ begin
 -- ######## ########
 -- ######## ########
 
-
-
+  -- map the SW-in to led-out
   process(sw) is
   begin
     for i in 0 to 15 loop
       led(i) <= sw(i);
     end loop;
   end process;
-
-
-
 
   -- circuit to multiplex to the 7-seg displays
   -- only used on the NEXYS board
@@ -115,8 +108,8 @@ begin
         when "100" => sseg_an <= "11101111";
         when "101" => sseg_an <= "11011111";
         when "110" => sseg_an <= "10111111";
-        when "111" => sseg_an <= "01111111";
-        when others => null;
+--      when "111" => sseg_an <= "01111111";
+        when others =>sseg_an <= "01111111"; -- as when "111"
       end case;
           
      case segled_counter(17 downto 15) is
@@ -127,11 +120,9 @@ begin
         when "100" => digit := std_logic_vector(seg_led_data(19 downto 16));
         when "101" => digit := std_logic_vector(seg_led_data(23 downto 20));
         when "110" => digit := std_logic_vector(seg_led_data(27 downto 24));
-        when "111" => digit := std_logic_vector(seg_led_data(31 downto 28));
-        when others => null;
+--      when "111" => digit := std_logic_vector(seg_led_data(31 downto 28));
+        when others =>digit := std_logic_vector(seg_led_data(31 downto 28)); -- as when "111"
       end case;
-    
-      
       
       -- segments are:
       -- 7 - decimal point
@@ -158,17 +149,14 @@ begin
         when x"C" => sseg_ca   <= "11000110";
         when x"D" => sseg_ca   <= "10100001";
         when x"E" => sseg_ca   <= "10000110";
-        when x"F" => sseg_ca   <= "10001110";
-        when others => sseg_ca <= "01111111";
+--      when x"F" => sseg_ca   <= "10001110";
+        when others => sseg_ca <= "10001110"; -- as when x"F"
       end case; 
       
-
     end if;
-
+    
   end process;
   
-
-
   viciv0: entity work.bensvic2
     port map (
 	    sysclk        => sysclk,

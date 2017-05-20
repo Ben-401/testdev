@@ -20,9 +20,6 @@ entity container is
     clk_in : STD_LOGIC;
     btnCpuReset_in : in  STD_LOGIC; -- normally high, active low
 
---    irq : in  STD_LOGIC;
---     nmi : in  STD_LOGIC;
-
     ja1_out : out std_logic;
     ja2_out : out std_logic;
     ja3_out : out std_logic;
@@ -286,9 +283,6 @@ begin
     reset_L => CLK1mrst_l_out, -- normally low, reset=1
     pixelclock_en => '1',
     cpuioclock_en => CLK1div3_en,
-
-    irq => CLK1sw_sample(0),
-    nmi => CLK1sw_sample(1),
 
     vsync           => vsync,
     hsync           => hsync,
