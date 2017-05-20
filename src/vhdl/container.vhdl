@@ -41,18 +41,11 @@ entity container is
          vgagreen : out  UNSIGNED (3 downto 0);
          vgablue : out  UNSIGNED (3 downto 0);
 
-         
-
-
--- container
-         ----------------------------------------------------------------------
--- container
--- container
--- container
-         --led   : out std_logic_vector(15 downto 0);
+   ----------------------------------------------------------------------
+   -- MISC input/output
          led_out : out std_logic_vector(15 downto 0);
 	 
-         --sw    : in std_logic_vector(15 downto 0);
+
          sw_in0  : in std_logic;
          sw_in1  : in std_logic;
          sw_in2  : in std_logic;

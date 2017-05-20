@@ -1,40 +1,3 @@
---
--- Written by
---    Paul Gardner-Stephen <hld@c64.org>  2013-2014
---
--- *  This program is free software; you can redistribute it and/or modify
--- *  it under the terms of the GNU Lesser General Public License as
--- *  published by the Free Software Foundation; either version 3 of the
--- *  License, or (at your option) any later version.
--- *
--- *  This program is distributed in the hope that it will be useful,
--- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
--- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- *  GNU General Public License for more details.
--- *
--- *  You should have received a copy of the GNU Lesser General Public License
--- *  along with this program; if not, write to the Free Software
--- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
--- *  02111-1307  USA.
-
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    22:30:37 12/10/2013 
--- Design Name: 
--- Module Name:    container - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
---
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Additional Comments: 
---
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -58,142 +21,24 @@ entity machine is
     reset_L : std_logic;
     pixelclock_en : std_logic;
     cpuioclock_en : std_logic;
-         --pixelclock : STD_LOGIC;
-         --pixelclock2x : STD_LOGIC;
-         --cpuclock : std_logic;
-         --clock50mhz : in std_logic;
-         --ioclock : std_logic;
-         --uartclock : std_logic;
-         --btnCpuReset : in  STD_LOGIC;
-			
- 
-	 
---	 ethclk      : in std_logic;
---	 ethclock_en : in std_logic;
+
 	 
          irq : in  STD_LOGIC;
         nmi : in  STD_LOGIC;
 
---         no_kickstart : in std_logic;
---
---         ddr_counter : in unsigned(7 downto 0);
---         ddr_state : in unsigned(7 downto 0);
-         
          ----------------------------------------------------------------------
          -- VGA output
          ----------------------------------------------------------------------
--- machine
+
          vsync : out  STD_LOGIC;
          hsync : out  STD_LOGIC;
          vgared : out  UNSIGNED (3 downto 0);
          vgagreen : out  UNSIGNED (3 downto 0);
          vgablue : out  UNSIGNED (3 downto 0);
 
-         -------------------------------------------------------------------------
-         -- Lines for the SDcard interface itself
-         -------------------------------------------------------------------------
--- machine
---         cs_bo : out std_logic;
---         sclk_o : out std_logic;
---         mosi_o : out std_logic;
---         miso_i : in  std_logic;
---
---         ---------------------------------------------------------------------------
---         -- Lines for other devices that we handle here
---         ---------------------------------------------------------------------------
--- machine
---         aclMISO : in std_logic;
---         aclMOSI : out std_logic;
---         aclSS : out std_logic;
---         aclSCK : out std_logic;
---         aclInt1 : in std_logic;
---         aclInt2 : in std_logic;
---    
---         ampPWM : out std_logic;
---         ampSD : out std_logic;
---
---         micData : in std_logic;
---         micClk : out std_logic;
---         micLRSel : out std_logic;
---
---         tmpSDA : out std_logic;
---         tmpSCL : out std_logic;
---         tmpInt : in std_logic;
---         tmpCT : in std_logic;
---         
---         ---------------------------------------------------------------------------
---         -- IO lines to the ethernet controller
---         ---------------------------------------------------------------------------
--- machine
---         eth_mdio : inout std_logic;
---         eth_mdc : out std_logic;
---         eth_reset : out std_logic;
---         eth_rxd : in unsigned(1 downto 0);
---         eth_txd : out unsigned(1 downto 0);
---         eth_txen : out std_logic;
---         eth_rxdv : in std_logic;
---         eth_rxer : in std_logic;
---         eth_interrupt : in std_logic;
---         
--- BG removed because does not provide core functionality
---         ----------------------------------------------------------------------
---         -- Flash RAM for holding config
---         ----------------------------------------------------------------------
--- machine
---         QspiSCK : out std_logic;
---         QspiDB : inout std_logic_vector(3 downto 0);
---         QspiCSn : out std_logic;
---
---         fpga_temperature : in std_logic_vector(11 downto 0);
---         
---         ---------------------------------------------------------------------------
---         -- Interface to Slow RAM (128MB DDR2 RAM chip)
---         ---------------------------------------------------------------------------
--- machine
---         slowram_addr_reflect : in std_logic_vector(26 downto 0);
---         slowram_datain_reflect : in std_logic_vector(7 downto 0);
---         slowram_addr : out std_logic_vector(26 downto 0);
---         slowram_we : out std_logic;
---         slowram_request_toggle : out std_logic;
---         slowram_done_toggle : in std_logic;
---         slowram_datain : out std_logic_vector(7 downto 0);
---         -- simple-dual-port cache RAM interface so that CPU doesn't have to read
---         -- data cross-clock
---         cache_address        : out std_logic_vector(8 downto 0);
---         cache_read_data      : in std_logic_vector(150 downto 0);   
---
---         ----------------------------------------------------------------------
---         -- PS/2 adapted USB keyboard & joystick connector.
---         -- (For using a keyrah adapter to connect to the keyboard.)
---         ----------------------------------------------------------------------
--- machine
---         ps2data : in std_logic;
---         ps2clock : in std_logic;
---
---         ----------------------------------------------------------------------
---         -- PMOD interface for keyboard, joystick, expansion port etc board.
---         ----------------------------------------------------------------------
---         pmod_clock : in std_logic;
---         pmod_start_of_sequence : in std_logic;
---         pmod_data_in : in std_logic_vector(3 downto 0);
---         pmod_data_out : out std_logic_vector(1 downto 0);
---         pmoda : inout std_logic_vector(7 downto 0);
---
---         uart_rx : in std_logic;
---         uart_tx : out std_logic;
---    
--- BG removed this because it seems not required for core functioality
---         ----------------------------------------------------------------------
---         -- Debug interfaces on Nexys4 board
---         ----------------------------------------------------------------------
--- machine
+
          led : out std_logic_vector(15 downto 0);
          sw : in std_logic_vector(15 downto 0);
---         btn : in std_logic_vector(4 downto 0);
---
---         UART_TXD : out std_logic;
---         RsRx : in std_logic;
---         
 
         -- 7seg 8x displays, each are 7-seg
         -- all cathodes of each display are connected to a common data bus
@@ -227,90 +72,6 @@ architecture Behavioral of machine is
 
 
 
-
---  component viciv is
---    Port (
---    sysclk        : in std_logic;
---	 reset2        : in std_logic;
---	 pixelclock_en : in std_logic;
---	 cpuioclock_en : in std_logic;
---    
-----    ----------------------------------------------------------------------
-----    -- dot clock
-----    ----------------------------------------------------------------------
-----    pixelclock : in  STD_LOGIC;
-----    pixelclock2x : in std_logic;
-----    ----------------------------------------------------------------------
-----    -- CPU clock (used for chipram and fastio interfaces)
-----    ----------------------------------------------------------------------
-----    cpuclock : in std_logic;
-----    ioclock : in std_logic;
---
---    -- CPU IRQ
---    irq : out std_logic;
---
-----    reset : in std_logic;
---
---    -- Internal drive LED status for OSD
---    led : in std_logic;
---    motor : in std_logic;
---
---    -- Actual drive LED (including blink status) for keyboard
---    -- (the F011 does this on a real C65)
---    drive_led_out : out std_logic;
---
---    vicii_2mhz : out std_logic;
---    viciii_fast : out std_logic;
---    viciv_fast : out std_logic;     
---
---    xray_mode : in std_logic;
---    
---    ----------------------------------------------------------------------
---    -- VGA output
---    ----------------------------------------------------------------------
---    vsync : out  STD_LOGIC;
---    hsync : out  STD_LOGIC;
---    vgared : out  UNSIGNED (3 downto 0);
---    vgagreen : out  UNSIGNED (3 downto 0);
---    vgablue : out  UNSIGNED (3 downto 0);
---
---    pixel_stream_out : out unsigned (7 downto 0);
---    pixel_y : out unsigned (11 downto 0);
---    pixel_valid : out std_logic;
---    pixel_newframe : out std_logic;
---    pixel_newraster : out std_logic;
---    
---    ---------------------------------------------------------------------------
---    -- CPU Interface to ChipRAM in video controller (just 128KB for now)
---    ---------------------------------------------------------------------------
---    chipram_we : IN STD_LOGIC;
---    chipram_address : IN unsigned(16 DOWNTO 0);
---    chipram_datain : IN unsigned(7 DOWNTO 0);
---    
---    -----------------------------------------------------------------------------
---    -- FastIO interface for accessing video registers
---    -----------------------------------------------------------------------------
---    fastio_addr : in std_logic_vector(19 downto 0);
---    fastio_read : in std_logic;
---    fastio_write : in std_logic;
---    fastio_wdata : in std_logic_vector(7 downto 0);
---    fastio_rdata : out std_logic_vector(7 downto 0);
---    colour_ram_fastio_rdata : out std_logic_vector(7 downto 0);
---    colour_ram_cs : in std_logic;
---    charrom_write_cs : in std_logic;
---
---    viciii_iomode : out std_logic_vector(1 downto 0) := "11";
---
---    iomode_set : in std_logic_vector(1 downto 0);
---    iomode_set_toggle : in std_logic;
---
---    colourram_at_dc00 : out std_logic := '0';   
---    rom_at_e000 : out std_logic;
---    rom_at_c000 : out std_logic;
---    rom_at_a000 : out std_logic;
---    rom_at_8000 : out std_logic
---      );
---  end component;
 
   
   signal key_scancode : unsigned(15 downto 0);
@@ -748,16 +509,6 @@ begin
 
     end if;
 
---    if rising_edge(pixelclock) then
---      -- Work out phi0 frequency for CIA timers
---      if phi0_counter=phi0_divisor then
---        phi0 <= not phi0;
---        phi0_counter <= 0;
---      else
---        phi0_counter <= phi0_counter + 1;
---      end if;
---    end if;
-
   end process;
   
 
@@ -774,76 +525,9 @@ begin
       vgared          => vgared,
       vgagreen        => vgagreen,
       vgablue         => vgablue 
---      pixel_stream_out => open,--pixel_stream,
---      pixel_y => open,--pixel_y,
---      pixel_valid => open,--pixel_valid,
---      pixel_newframe => open,--pixel_newframe,
---      pixel_newraster => open,--pixel_newraster,
--- BG removed because does not provide core functionality ethernet/framepacker
+
       );
 
---  viciv0: viciv
---    port map (
---	   sysclk => sysclk,
---		reset2 => reset_combined,
---		pixelclock_en => pixelclock_en,
---		cpuioclock_en => cpuioclock_en,	
---		
-----      pixelclock      => pixelclock,
-----      pixelclock2x      => pixelclock2x,
-----      cpuclock        => cpuclock,
---    clock50mhz => clock50mhz,
---    ethclk      => ethclk,
---    ethclock_en => ethclock_en,
-----      ioclock        => ioclock,
---
---      irq             => vic_irq,
-----      reset           => reset_combined,
---
---      led => drive_led,
---      motor => motor,
---      drive_led_out => drive_led_out,
---
---      xray_mode => xray_mode,
---      
---      vsync           => vsync,
---      hsync           => hsync,
---      vgared          => vgared,
---      vgagreen        => vgagreen,
---      vgablue         => vgablue,
---
---      pixel_stream_out => pixel_stream,
---      pixel_y => pixel_y,
---      pixel_valid => pixel_valid,
---      pixel_newframe => pixel_newframe,
---      pixel_newraster => pixel_newraster,
---      
---      chipram_we => chipram_we,
---      chipram_address => chipram_address,
---      chipram_datain => chipram_datain,
---      colour_ram_fastio_rdata => colour_ram_fastio_rdata,
---      colour_ram_cs => colour_ram_cs,
---      charrom_write_cs => charrom_write_cs,
---
---      fastio_addr     => fastio_addr,
---      fastio_read     => fastio_read,
---      fastio_write    => fastio_write,
---      fastio_wdata    => fastio_wdata,
---      fastio_rdata    => fastio_vic_rdata,
---    
---      viciii_iomode => viciii_iomode,
---      iomode_set_toggle => iomode_set_toggle,
---      iomode_set => iomode_set,
---      vicii_2mhz => vicii_2mhz,
---      viciii_fast => viciii_fast,
---      viciv_fast => viciv_fast,
---    
---      colourram_at_dc00 => colourram_at_dc00,
---      rom_at_e000 => rom_at_e000,
---      rom_at_c000 => rom_at_c000,
---      rom_at_a000 => rom_at_a000,
---      rom_at_8000 => rom_at_8000      
---      );
 
   
  

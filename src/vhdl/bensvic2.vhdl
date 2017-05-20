@@ -1,39 +1,3 @@
---
--- Written by
---    Paul Gardner-Stephen <hld@c64.org>  2013-2014
---
--- *  This program is free software; you can redistribute it and/or modify
--- *  it under the terms of the GNU Lesser General Public License as
--- *  published by the Free Software Foundation; either version 3 of the
--- *  License, or (at your option) any later version.
--- *
--- *  This program is distributed in the hope that it will be useful,
--- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
--- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
--- *  GNU General Public License for more details.
--- *
--- *  You should have received a copy of the GNU Lesser General Public License
--- *  along with this program; if not, write to the Free Software
--- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
--- *  02111-1307  USA.
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    19:11:30 01/02/2014 
--- Design Name: 
--- Module Name:    vga - Behavioral 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
---
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Additional Comments: 
---
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -60,11 +24,6 @@ entity bensvic2 is
 	 pixelclock_en : in std_logic;
 	 cpuioclock_en : in std_logic;
     
-
-    
-    ----------------------------------------------------------------------
-    -- VGA output
-    ----------------------------------------------------------------------
     vsync : out  STD_LOGIC;
     hsync : out  STD_LOGIC;
     vgared : out  UNSIGNED (3 downto 0);
