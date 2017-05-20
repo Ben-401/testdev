@@ -52,23 +52,6 @@ end machine;
 
 architecture Behavioral of machine is
 
-  component bensvic2 is
-    Port (
-    sysclk        : in std_logic;
-    reset_S       : in std_logic;
-    reset_L       : in std_logic;
-    pixelclock_en : in std_logic;
-    cpuioclock_en : in std_logic;
-    ----------------------------------------------------------------------
-    -- VGA output
-    ----------------------------------------------------------------------
-    vsync : out  STD_LOGIC;
-    hsync : out  STD_LOGIC;
-    vgared : out  UNSIGNED (3 downto 0);
-    vgagreen : out  UNSIGNED (3 downto 0);
-    vgablue : out  UNSIGNED (3 downto 0)
-      );
-  end component;
 
 
 
@@ -513,7 +496,7 @@ begin
   
 
 
-  viciv0: bensvic2
+  viciv0: entity work.bensvic2
     port map (
 	   sysclk => sysclk,
 		reset_S => reset_S,

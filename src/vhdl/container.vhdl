@@ -80,181 +80,7 @@ end container;
 architecture Behavioral of container is
 
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
-
-  component clkgen is
-    Port (
-      clk_in : STD_LOGIC;         
-      reset_ext_in : in  STD_LOGIC;
-         
-      clk0_out : out std_logic;
-      clk1_out : out std_logic;
-      locked_out : out std_logic;
-      reset_out_A : out std_logic; -- short-press
-      reset_out_B : out std_logic  -- long-press
-    );
-  end component;
-
-
- 
-
-
-
-  
-
-
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
-
-  component machine is
-  Port (
-
---         pixelclock : STD_LOGIC;
---         pixelclock2x : STD_LOGIC;
---         cpuclock : std_logic;
---         clock50mhz : std_logic;
---         ioclock : std_logic;
---         uartclock : std_logic;
---         btnCpuReset : in  STD_LOGIC;
-
-    sysclk : in std_logic;
-    reset_S : std_logic;
-    reset_L : std_logic;
-    pixelclock_en : in std_logic;
-    cpuioclock_en : in std_logic;
-
--- machine
-         irq : in  STD_LOGIC;
-         nmi : in  STD_LOGIC;
-
---         no_kickstart : in std_logic;
---
---         ddr_counter : in unsigned(7 downto 0);
---         ddr_state : in unsigned(7 downto 0);
-         
--- machine
-         ----------------------------------------------------------------------
-         -- VGA output
-         ----------------------------------------------------------------------
-         vsync : out  STD_LOGIC;
-         hsync : out  STD_LOGIC;
-         vgared : out  UNSIGNED (3 downto 0);
-         vgagreen : out  UNSIGNED (3 downto 0);
-         vgablue : out  UNSIGNED (3 downto 0);
-
---         ---------------------------------------------------------------------------
---         -- IO lines to the ethernet controller
---         ---------------------------------------------------------------------------
---         eth_mdio : inout std_logic;
---         eth_mdc : out std_logic;
---         eth_reset : out std_logic;
---         eth_rxd : in unsigned(1 downto 0);
---         eth_txd : out unsigned(1 downto 0);
---         eth_txen : out std_logic;
---         eth_rxer : in std_logic;
---         eth_rxdv : in std_logic;
---         eth_interrupt : in std_logic;
---
--- BG removed because does not provide core functionality ethernet/framepacker
-         
-         -------------------------------------------------------------------------
-         -- Lines for the SDcard interface itself
-         -------------------------------------------------------------------------
--- machine
---         cs_bo : out std_logic;
---         sclk_o : out std_logic;
---         mosi_o : out std_logic;
---         miso_i : in  std_logic;
-
-         ---------------------------------------------------------------------------
-         -- Lines for other devices that we handle here
-         ---------------------------------------------------------------------------
---         aclMISO : in std_logic;
---         aclMOSI : out std_logic;
---         aclSS : out std_logic;
---         aclSCK : out std_logic;
---         aclInt1 : in std_logic;
---         aclInt2 : in std_logic;
-    
--- machine
---         micData : in std_logic;
---         micClk : out std_logic;
---         micLRSel : out std_logic;
---
---         ampPWM : out std_logic;
---         ampSD : out std_logic;
---
---         tmpSDA : out std_logic;
---         tmpSCL : out std_logic;
---         tmpInt : in std_logic;
---         tmpCT : in std_logic;
-
-         ----------------------------------------------------------------------
-         -- Flash RAM for holding config
-         ----------------------------------------------------------------------
--- machine
---         QspiSCK : out std_logic;
---         QspiDB : inout std_logic_vector(3 downto 0);
---         QspiCSn : out std_logic;
---
--- BG removed as ???
-
---         -- Temperature of FPGA
---         fpga_temperature : in std_logic_vector(11 downto 0);
-         
-         ---------------------------------------------------------------------------
-         -- Interface to Slow RAM (wrapper around a 128MB DDR2 RAM chip)
-         ---------------------------------------------------------------------------
--- machine
---         slowram_addr : out std_logic_vector(26 downto 0);
---         slowram_we : out std_logic;
---         slowram_request_toggle : out std_logic;
---         slowram_done_toggle : in std_logic;
---         slowram_datain : out std_logic_vector(7 downto 0);
---         slowram_addr_reflect : in std_logic_vector(26 downto 0);
---         slowram_datain_reflect : in std_logic_vector(7 downto 0);
---
---         -- simple-dual-port cache RAM interface so that CPU doesn't have to read
---         -- data cross-clock
---         cache_address        : out std_logic_vector(8 downto 0);
---         cache_read_data      : in std_logic_vector(150 downto 0);   
-         
-         ----------------------------------------------------------------------
-         -- PS/2 adapted USB keyboard & joystick connector.
-         -- For now we will use a keyrah adapter to connect to the keyboard.
-         ----------------------------------------------------------------------
--- machine
---         ps2data : in std_logic;
---         ps2clock : in std_logic;         
-
-         ----------------------------------------------------------------------
-         -- PMOD interface for keyboard, joystick, expansion port etc board.
-         ----------------------------------------------------------------------
---         pmod_clock : in std_logic;
---         pmod_start_of_sequence : in std_logic;
---         pmod_data_in : in std_logic_vector(3 downto 0);
---         pmod_data_out : out std_logic_vector(1 downto 0);
---			
---         pmoda : inout std_logic_vector(7 downto 0);
---         uart_rx : in std_logic;
---         uart_tx : out std_logic;
---
--- BG removed this as it seems not required for core functionality
-
-         ----------------------------------------------------------------------
-         -- Debug interfaces on Nexys4 board
-         ----------------------------------------------------------------------
-         led : out std_logic_vector(15 downto 0);
-         sw : in std_logic_vector(15 downto 0);
-	 
---         btn : in std_logic_vector(4 downto 0);
---
---         UART_TXD : out std_logic;
---         RsRx : in std_logic;
-         
-         sseg_ca : out std_logic_vector(7 downto 0);
-         sseg_an : out std_logic_vector(7 downto 0)
-         );
-  end component; -- machine
-
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
 
@@ -317,7 +143,7 @@ begin
     );
 
   -- insert our clock/reset handling component
-  clkgen0: component clkgen
+  clkgen0: entity work.clkgen
   port map (
     clk_in   => clk100buf,
     reset_ext_in => btnCpuReset_in,
@@ -460,127 +286,27 @@ begin
   
   
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
-  
-  machine0: machine
+
+  machine0: entity work.machine
     port map (
       sysclk => CLK1int,
       reset_S => CLK1mrst_s_out, -- normally low, reset=1
       reset_L => CLK1mrst_l_out, -- normally low, reset=1
       pixelclock_en => '1',
       cpuioclock_en => CLK1div3_en,
-		
---      pixelclock2x    => open,
---      pixelclock      => open,
---      cpuclock        => open,
-----      clock50mhz      => clock50mhz,
-----      ioclock         => ioclock, -- 32MHz
-----      uartclock       => ioclock, -- must be 32MHz
-----      uartclock       => cpuclock, -- Match CPU clock (48MHz)
---      ioclock         => open, -- Match CPU clock
---		
---      btncpureset => locked_int, -- locked is active high
-		
+
       irq => CLK1sw_sample(0),
       nmi => CLK1sw_sample(1),
 
---      no_kickstart => '0',
---      ddr_counter => ddr_counter,
---      ddr_state => ddr_state,
-      
       vsync           => vsync,
       hsync           => hsync,
       vgared          => vgared,
       vgagreen        => vgagreen,
       vgablue         => vgablue,
 
--- machine
-      ---------------------------------------------------------------------------
-      -- IO lines to the ethernet controller
-      ---------------------------------------------------------------------------
---      eth_mdio => eth_mdio,
---      eth_mdc => eth_mdc,
---      eth_reset => eth_reset,
---      eth_rxd => eth_rxd,
---      eth_txd => eth_txd,
---      eth_txen => eth_txen,
---      eth_rxer => eth_rxer,
---      eth_rxdv => eth_rxdv,
---      eth_interrupt => eth_interrupt,
---
--- BG removed because does not provide core functionality
-      
-      -------------------------------------------------------------------------
-      -- Lines for the SDcard interface itself
-      -------------------------------------------------------------------------
--- machine
---      cs_bo => sdReset,
---      sclk_o => sdClock,
---      mosi_o => sdMOSI,
---      miso_i => sdMISO,
---
---      aclMISO => aclMISO,
---      aclMOSI => aclMOSI,
---      aclSS => aclSS,
---      aclSCK => aclSCK,
---      aclInt1 => aclInt1,
---      aclInt2 => aclInt2,
---    
---      micData => micData,
---      micClk => micClk,
---      micLRSel => micLRSel,
---
--- machine
---      ampPWM => ampPWM,
---      ampSD => ampSD,
---    
---      tmpSDA => tmpSDA,
---      tmpSCL => tmpSCL,
---      tmpInt => tmpInt,
---      tmpCT => tmpCT,
---      
---      ps2data =>      ps2data,
---      ps2clock =>     ps2clk,
---
---      pmod_clock => jblo(1),
---      pmod_start_of_sequence => jblo(2),
---      pmod_data_in(1 downto 0) => jblo(4 downto 3),
---      pmod_data_in(3 downto 2) => jbhi(8 downto 7),
---      pmod_data_out => jbhi(10 downto 9),
---
---      pmoda(3 downto 0) => jalo(4 downto 1),
---      pmoda(7 downto 4) => jahi(10 downto 7),
---
---      uart_rx => jclo(1),
---      uart_tx => jclo(2),
---
--- BG removed as it seems not required for core functionality
-
-      
--- machine
---      slowram_we => slowram_we,
---      slowram_request_toggle => slowram_request_toggle,
---      slowram_done_toggle => slowram_done_toggle,
---      slowram_datain => slowram_datain,
---      slowram_addr => slowram_addr,
---      slowram_addr_reflect => slowram_addr_reflect,
---      slowram_datain_reflect => slowram_datain_reflect,
---      cache_read_data => cache_read_data,
---      cache_address => cache_address,
-
-----      QspiSCK => QspiSCK,
---      QspiDB => QspiDB,
---      QspiCSn => QspiCSn,
---
--- BG removed as ???
---      fpga_temperature => fpga_temperature,
--- machine
       led => led_out,
       sw => CLK1sw_sample,
---      btn => btn,
---
---      UART_TXD => UART_TXD,
---      RsRx => RsRx,
---         
+  
       sseg_ca => sseg_ca,
       sseg_an => sseg_an
       );
