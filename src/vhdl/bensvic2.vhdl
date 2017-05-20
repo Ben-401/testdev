@@ -16,23 +16,25 @@ use work.debugtools.all;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
+-- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
+
 entity bensvic2 is
-  Port (
+  port (
     sysclk        : in std_logic;
-	 reset_S        : in std_logic;
-	 reset_L        : in std_logic;
-	 pixelclock_en : in std_logic;
-	 cpuioclock_en : in std_logic;
-    
+	  reset_S       : in std_logic;
+	  reset_L       : in std_logic;
+	  pixelclock_en : in std_logic;
+	  cpuioclock_en : in std_logic;
+     
     vsync : out  STD_LOGIC;
     hsync : out  STD_LOGIC;
     vgared : out  UNSIGNED (3 downto 0);
     vgagreen : out  UNSIGNED (3 downto 0);
     vgablue : out  UNSIGNED (3 downto 0)
-	 
-	 
     );
 end bensvic2;
+
+-- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
 
 architecture Behavioral of bensvic2 is
 
@@ -109,35 +111,7 @@ begin
   end process;
   
 
---  process (reset2, sysclk, pixelclock_en)
---
---    VARIABLE hc0v : INTEGER RANGE 0 TO h_period := 0;
---    VARIABLE vc0v : INTEGER RANGE 0 TO v_period := 0;
---
---  begin
---
---    if (rising_edge(sysclk) and pixelclock_en = '1') then
---      if (reset2 = '0') then
---		  hc0s <= (others => '0');
---		  vc0s <= (others => '0');
---      else
---		
---  		  if (hc0v < h_period) then
---		    hc0v := hc0v + 1;
---		  else
---		    hc0v := 0;--(others => '0');
---
---  		    if (vc0v < v_period) then
---		      vc0v := vc0v + 1; --"00000000000000001";
---		    else
---		      vc0v := 0;--(others => '0');
---		    end if;
---		  end if;
---
---
---		  
---		end if;
---	 end if;
+
 
   process (reset_L, sysclk, pixelclock_en)
   begin  

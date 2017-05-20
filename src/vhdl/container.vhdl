@@ -16,63 +16,56 @@ use UNISIM.VComponents.all;
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
 
 entity container is
-  Port ( 
-        clk_in : STD_LOGIC;         
-         btnCpuReset_in : in  STD_LOGIC; -- normally high, active low
---         irq : in  STD_LOGIC;
---         nmi : in  STD_LOGIC;
-         ja1_out : out std_logic;
-         ja2_out : out std_logic;
-         ja3_out : out std_logic;
-         ja4_out : out std_logic;
+  port (
+    clk_in : STD_LOGIC;
+    btnCpuReset_in : in  STD_LOGIC; -- normally high, active low
 
-         ja7_out : out std_logic;
-         ja8_out : out std_logic;
-         ja9_out : out std_logic;
-         jaa_out : out std_logic;
-			
-         ----------------------------------------------------------------------
-         -- VGA output
-         ----------------------------------------------------------------------
--- container
-         vsync : out  STD_LOGIC;
-         hsync : out  STD_LOGIC;
-         vgared : out  UNSIGNED (3 downto 0);
-         vgagreen : out  UNSIGNED (3 downto 0);
-         vgablue : out  UNSIGNED (3 downto 0);
+--    irq : in  STD_LOGIC;
+--     nmi : in  STD_LOGIC;
 
-   ----------------------------------------------------------------------
-   -- MISC input/output
-         led_out : out std_logic_vector(15 downto 0);
-	 
+    ja1_out : out std_logic;
+    ja2_out : out std_logic;
+    ja3_out : out std_logic;
+    ja4_out : out std_logic;
+    ja7_out : out std_logic;
+    ja8_out : out std_logic;
+    ja9_out : out std_logic;
+    jaa_out : out std_logic;
 
-         sw_in0  : in std_logic;
-         sw_in1  : in std_logic;
-         sw_in2  : in std_logic;
-         sw_in3  : in std_logic;
-         sw_in4  : in std_logic;
-         sw_in5  : in std_logic;
-         sw_in6  : in std_logic;
-         sw_in7  : in std_logic;
-         sw_in8  : in std_logic;
-         sw_in9  : in std_logic;
-         sw_inA  : in std_logic;
-         sw_inB  : in std_logic;
-         sw_inC  : in std_logic;
-         sw_inD  : in std_logic;
-         sw_inE  : in std_logic;
-         sw_inF  : in std_logic;
-			
---         btn_in : in std_logic_vector(4 downto 0);
-			
--- container
+    vsync : out  STD_LOGIC;
+    hsync : out  STD_LOGIC;
+    vgared : out  UNSIGNED (3 downto 0);
+    vgagreen : out  UNSIGNED (3 downto 0);
+    vgablue : out  UNSIGNED (3 downto 0);
 
---         UART_TXD : out std_logic;
---         RsRx : in std_logic;
-         
-         sseg_ca : out std_logic_vector(7 downto 0);
-         sseg_an : out std_logic_vector(7 downto 0)
-         );
+    ----------------------------------------------------------------------
+    -- MISC input/output
+    led_out : out std_logic_vector(15 downto 0);
+    
+    sw_in0  : in std_logic;
+    sw_in1  : in std_logic;
+    sw_in2  : in std_logic;
+    sw_in3  : in std_logic;
+    sw_in4  : in std_logic;
+    sw_in5  : in std_logic;
+    sw_in6  : in std_logic;
+    sw_in7  : in std_logic;
+    sw_in8  : in std_logic;
+    sw_in9  : in std_logic;
+    sw_inA  : in std_logic;
+    sw_inB  : in std_logic;
+    sw_inC  : in std_logic;
+    sw_inD  : in std_logic;
+    sw_inE  : in std_logic;
+    sw_inF  : in std_logic;
+
+--    btn_in : in std_logic_vector(4 downto 0);
+--    UART_TXD : out std_logic;
+--    RsRx : in std_logic;
+
+    sseg_ca : out std_logic_vector(7 downto 0);
+    sseg_an : out std_logic_vector(7 downto 0)
+    );
 end container;
 
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
@@ -85,12 +78,9 @@ architecture Behavioral of container is
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
 
   signal sw_int :    std_logic_vector(15 downto 0);
---  signal led_int :    std_logic_vector(15 downto 0);
 
   -- buffered external OSC 100mhz
   signal clk100buf : std_logic;
-
-
 
 
   -- toplevel reset signals (clk100buf domain)
@@ -137,15 +127,15 @@ begin
 
   -- input global clock buffer on the external 100M osc
   clkin_buf : IBUFG
-  port map
-   (I   => clk_in,
-    O   => clk100buf
+  port map (
+    I => clk_in,
+    O => clk100buf
     );
 
   -- insert our clock/reset handling component
   clkgen0: entity work.clkgen
   port map (
-    clk_in   => clk100buf,
+    clk_in       => clk100buf,
     reset_ext_in => btnCpuReset_in,
     clk0_out => open,
     clk1_out => clk1int,
@@ -274,6 +264,8 @@ begin
     end if;
   end process;
   
+  
+  -- debug output
   ja1_out <= btnCpuReset_in;
   ja2_out <= reset_int_A;
   ja3_out <= reset_int_B;
@@ -288,28 +280,27 @@ begin
 -- ####### ####### ####### ####### ####### ####### ####### ####### ####### ####
 
   machine0: entity work.machine
-    port map (
-      sysclk => CLK1int,
-      reset_S => CLK1mrst_s_out, -- normally low, reset=1
-      reset_L => CLK1mrst_l_out, -- normally low, reset=1
-      pixelclock_en => '1',
-      cpuioclock_en => CLK1div3_en,
+  port map (
+    sysclk => CLK1int,
+    reset_S => CLK1mrst_s_out, -- normally low, reset=1
+    reset_L => CLK1mrst_l_out, -- normally low, reset=1
+    pixelclock_en => '1',
+    cpuioclock_en => CLK1div3_en,
 
-      irq => CLK1sw_sample(0),
-      nmi => CLK1sw_sample(1),
+    irq => CLK1sw_sample(0),
+    nmi => CLK1sw_sample(1),
 
-      vsync           => vsync,
-      hsync           => hsync,
-      vgared          => vgared,
-      vgagreen        => vgagreen,
-      vgablue         => vgablue,
+    vsync           => vsync,
+    hsync           => hsync,
+    vgared          => vgared,
+    vgagreen        => vgagreen,
+    vgablue         => vgablue,
 
-      led => led_out,
-      sw => CLK1sw_sample,
+    led => led_out,
+    sw => CLK1sw_sample,
   
-      sseg_ca => sseg_ca,
-      sseg_an => sseg_an
-      );
+    sseg_ca => sseg_ca,
+    sseg_an => sseg_an
+    );
   
-
 end Behavioral;
