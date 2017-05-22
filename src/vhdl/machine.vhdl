@@ -32,6 +32,9 @@ entity machine is
 
     led : out std_logic_vector(15 downto 0);
     sw : in std_logic_vector(15 downto 0);
+    
+    uart_txd : out std_logic;
+    uart_rxd : in std_logic;
 
     -- 7seg 8x displays, each are 7-seg
     -- all cathodes of each display are connected to a common data bus
@@ -169,6 +172,15 @@ begin
       vgared        => vgared,
       vgagreen      => vgagreen,
       vgablue       => vgablue 
+      );
+
+  uart0: entity work.uart
+    port map (
+      sysclk        => sysclk,
+      reset_S       => reset_S,
+      cpuioclock_en => cpuioclock_en,
+      txd           => uart_txd,
+      rxd           => uart_rxd
       );
 
 end Behavioral;

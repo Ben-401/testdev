@@ -1,4 +1,8 @@
+vhdl work "../../../src/vhdl/simple_uart_for_fpga/source/comp/uart_parity.vhdl"
+vhdl work "../../../src/vhdl/simple_uart_for_fpga/source/comp/uart_tx.vhdl"
+vhdl work "../../../src/vhdl/simple_uart_for_fpga/source/comp/uart_rx.vhdl"
 vhdl work "../../../src/vhdl/debugtools.vhdl"
+vhdl work "../../../src/vhdl/uart.vhdl"
 vhdl work "../../../src/vhdl/bensvic2.vhdl"
 vhdl work "../../../src/vhdl/machine.vhdl"
 vhdl work "../../../src/vhdl/clkgen.vhdl"

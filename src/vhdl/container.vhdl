@@ -57,8 +57,8 @@ entity container is
     sw_inF  : in std_logic;
 
 --    btn_in : in std_logic_vector(4 downto 0);
---    UART_TXD : out std_logic;
---    RsRx : in std_logic;
+    uart_txd : out std_logic;
+    uart_rxd : in std_logic;
 
     sseg_ca : out std_logic_vector(7 downto 0);
     sseg_an : out std_logic_vector(7 downto 0)
@@ -292,7 +292,10 @@ begin
 
     led => led_out,
     sw => CLK1sw_sample,
-  
+    
+    uart_txd => uart_txd,
+    uart_rxd => uart_rxd,
+
     sseg_ca => sseg_ca,
     sseg_an => sseg_an
     );
