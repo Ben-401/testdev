@@ -159,11 +159,11 @@ begin
   
   viciv0: entity work.bensvic2
     port map (
-	    sysclk        => sysclk,
-		  reset_S       => reset_S,
-		  reset_L       => reset_L,
-		  pixelclock_en => pixelclock_en,
-		  cpuioclock_en => cpuioclock_en,
+      sysclk        => sysclk,
+      reset_S       => reset_S,
+      reset_L       => reset_L,
+      pixelclock_en => pixelclock_en,
+      cpuioclock_en => cpuioclock_en,
       vsync         => vsync,
       hsync         => hsync,
       vgared        => vgared,
