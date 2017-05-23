@@ -198,6 +198,7 @@ begin
 			clk => clk32,
 			hSyncPolarity => hSyncPolarity,
 			vSyncPolarity => vSyncPolarity,
+      enable_in => '1',
 			video_in => vicColorIndex,
 			hsync_in => vicHSync,
 			vsync_in => vicVSync,
@@ -214,17 +215,17 @@ begin
 			b => vgaB
 		);
 
-	colorram: entity work.fpga64_singleram
+	colorram: entity work.gen_ram --fpga64_singleram
 		generic map (
-			ramWidth => 4,
-			ramDepthBits => 10
+			dWidth => 4,
+			aWidth => 10
 		)
 		port map (
 			clk => clk32,
 			we => colorWe,
 			addr => systemAddr(9 downto 0),
-			di => cpuDo(3 downto 0),
-			do => colorData
+			d => cpuDo(3 downto 0),
+			q => colorData
 		);
 	colorWe <= (cs_color and pulseWrRam);
 
@@ -265,20 +266,26 @@ begin
 			cs_ram => cs_ram
 		);
 
-	vic: entity work.vicii_6567_6569
+	vic: entity work.video_vicii_656x --vicii_6567_6569
 		generic map (
-			graphicsEnabled => '1'
+--			graphicsEnabled => '1'
+      registeredAddress => false
 		)
 		port map (
 			clk => clk32,
-			enablePixel => enableVic,
-			enableData => enableVic,
-			endOfCycle => lastCycleVic,
-			phi0_cpu => phi0_cpu,
-			phi0_vic => phi0_vic,			
+			phi => phi0_cpu,
+--			phi0_vic => phi0_vic,			
+			enaData => enableVic,
+			enaPixel => enableVic,
+--			endOfCycle => lastCycleVic,
+
+      baSync => '0',
+			ba => ba,
+
 			mode6569 => (not ntscMode),
 			mode6567old => '0',
 			mode6567R8 => ntscMode,
+      mode6572 => '0',
 			
 			cs => cs_vic,
 			we => pulseWrIo,
@@ -287,19 +294,24 @@ begin
 
 			aRegisters => cpuAddr(5 downto 0),
 			diRegisters => cpuDo,
+      
 			di => vicDi,
 			diColor => colorData,
 			do => vicData,
 
-			ba => ba,
 			vicAddr => vicAddr(13 downto 0),
 --			vid_di => (others => '0'),
+			irq_n => irq_vic,
 			
 			hsync => vicHSync,
 			vsync => vicVSync,
 			colorIndex => vicColorIndex,
+      
+      debugX => open,
+      debugY => open,
+      vicRefresh => open,
+      addrValid => open
 
-			irq_n => irq_vic
 		);
 
 	cia1: entity work.cia6526
