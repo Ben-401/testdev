@@ -22,9 +22,9 @@ use ieee.numeric_std.ALL;
 
 entity cpu_6510 is
 	generic (
-		pipelineOpcode : boolean;
-		pipelineAluMux : boolean;
-		pipelineAluOut : boolean
+		pipelineOpcode : boolean := false;
+		pipelineAluMux : boolean := false;
+		pipelineAluOut : boolean := false
 	);
 	port (
 		clk : in std_logic;

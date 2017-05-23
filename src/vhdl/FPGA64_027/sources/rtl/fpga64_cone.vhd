@@ -441,12 +441,13 @@ begin
 			reset => reset,
 			cpuHasBus => cpuHasBus,
 
+			ramData => ramDataReg,
+
 			bankSwitch => cpuIO(2 downto 0),
 
 			game => game,
 			exrom => exrom,
 
-			ramData => ramDataReg,
 
 			cpuWe => cpuWe,
 			cpuAddr => cpuAddr,
@@ -461,6 +462,7 @@ begin
 
 			systemWe => systemWe,
 			systemAddr(16 downto 0) => systemAddr,
+			systemAddr(27 downto 17) => open,
 			dataToCpu => cpuDi,
 			dataToVic => vicDi,
 
@@ -470,6 +472,7 @@ begin
 			cs_cia1 => cs_cia1,
 			cs_cia2 => cs_cia2,
 			cs_ram => cs_ram,
+      
 			cs_ioE => cs_ioE,
 			cs_ioF => cs_ioF,
 			cs_romL => cs_romL,
