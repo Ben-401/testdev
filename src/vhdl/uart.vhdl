@@ -24,7 +24,7 @@ use work.debugtools.all;
 entity uart is
   generic (
     CLK_FREQ   : integer := 148e06;  -- set system clock frequency in Hz
-    BAUD_RATE  : integer := 230400;    -- baud rate value
+    BAUD_RATE  : integer := 115200;    -- baud rate value (230400)
     PARITY_BIT : string  := "none"     -- legal values: "none", "even", "odd", "mark", "space"
     );
   port (
@@ -58,7 +58,7 @@ begin
 
   uart_oversampling_clk_divider : process (sysclk, cpuioclock_en)
   begin
-    if (rising_edge(sysclk) and cpuioclock_en='1') then
+    if (rising_edge(sysclk)) then -- and cpuioclock_en='1') then
       if (reset_S = '1') then
         uart_ticks <= 0;
         uart_clk_en <= '0';
@@ -78,7 +78,7 @@ begin
 
   uart_rxd_debouncer : process (sysclk, cpuioclock_en)
   begin
-    if (rising_edge(sysclk) and cpuioclock_en='1') then
+    if (rising_edge(sysclk)) then -- and cpuioclock_en='1') then
       if (reset_S = '1') then
         uart_rxd_shreg <= (others => '1');
         uart_rxd_debounced <= '1';

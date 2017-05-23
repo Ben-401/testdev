@@ -1,0 +1,30 @@
+[*]
+[*] GTKWave Analyzer v3.3.78 (w)1999-2016 BSI
+[*] Sat Jan  7 04:25:32 2017
+[*]
+[dumpfile] "/home/gerb0002/dev/mega65-git/p-cleaner/mega65-core/src/vhdl/test-ghdl/bensvic2_tb.vcd"
+[dumpfile_mtime] "Sat Jan  7 04:24:48 2017"
+[dumpfile_size] 170045198
+[savefile] "/home/gerb0002/dev/mega65-git/p-cleaner/mega65-core/src/vhdl/test-ghdl/bensvic2_tb.gtkw"
+[timestart] 0
+[size] 1000 600
+[pos] -1 -1
+*-38.000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 223
+[signals_width] 134
+[sst_expanded] 1
+[sst_vpaned_height] 160
+@28
+reset_s
+reset_l
+pixelclock_en
+sysclk
+vsync
+hsync
+@22
+vgared[3:0]
+vgagreen[3:0]
+@23
+vgablue[3:0]
+[pattern_trace] 1
+[pattern_trace] 0
