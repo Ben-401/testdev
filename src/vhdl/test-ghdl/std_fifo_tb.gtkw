@@ -1,0 +1,32 @@
+[*]
+[*] GTKWave Analyzer v3.3.78 (w)1999-2016 BSI
+[*] Tue May 23 04:18:32 2017
+[*]
+[dumpfile] "/home/gerb0002/dev/ben-401/mega65-core/src/vhdl/test-ghdl/std_fifo_tb.vcd"
+[dumpfile_mtime] "Tue May 23 04:18:06 2017"
+[dumpfile_size] 40101
+[savefile] "/home/gerb0002/dev/ben-401/mega65-core/src/vhdl/test-ghdl/std_fifo_tb.gtkw"
+[timestart] 303100000
+[size] 1855 1176
+[pos] -1 -1
+*-27.000000 779000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 223
+[signals_width] 180
+[sst_expanded] 1
+[sst_vpaned_height] 362
+@28
+uut.clk
+uut.rst
+uut.writeen
+@22
+uut.datain[7:0]
+@28
+uut.readen
+@22
+uut.dataout[7:0]
+@29
+uut.empty
+@28
+uut.full
+[pattern_trace] 1
+[pattern_trace] 0
